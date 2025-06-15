@@ -1,0 +1,138 @@
+<!-- <ion-card>
+  <ion-card-header>
+    <ion-card-title class="ion-padding-start ion-padding-top">{{title}}</ion-card-title>
+  </ion-card-header>
+
+  <ion-card-content class="ion-margin-horizontal"> -->
+    <!-- Query -->
+    <!-- <ion-item lines="full"></ion-item> -->
+    <ion-item lines="full" class="ion-margin-vertical">
+      <ion-checkbox 
+        [(ngModel)]="filters.query.enabled"
+        [ngModelOptions]="{ standalone: true }"
+        name="query-enabled"
+        slot="start"
+      ></ion-checkbox>
+      <ion-input
+        class="ion-margin"
+        fill="outline"
+        label="Búsqueda"
+        label-placement="floating"
+        placeholder="¿Qué estás buscando?"
+        name="query"
+        type="text"
+        [value]="filters.query.value ?? ''"
+        (ionChange)="filters.query.value = $event.detail.value ?? ''"
+        [disabled]="!filters.query.enabled"
+      >
+        <ion-icon slot="start" name="search-outline"></ion-icon>
+      </ion-input>
+    </ion-item>
+
+    <!-- Coordenadas -->
+    <ion-item lines="full" class="ion-margin-vertical">
+      <ion-checkbox
+        [(ngModel)]="filters.coordinates.enabled"
+        [ngModelOptions]="{ standalone: true }"
+        name="coordinates-enabled"
+        slot="start"
+      ></ion-checkbox>
+      <!-- Latitud -->
+      <ion-input
+        class="ion-margin"
+        name="latitude"
+        type="number"
+        fill="outline"
+        label="Latitud"
+        label-placement="floating"
+        placeholder="0.000000"
+        [value]="filters.coordinates.value?.lat ?? ''"
+        readonly
+        [disabled]="!filters.coordinates.enabled"
+      ></ion-input>
+      <!-- Longitud -->
+      <ion-input
+        class="ion-margin-end"
+        name="longitude"
+        type="number"
+        fill="outline"
+        label="Longitud"
+        fill="outline"
+        label-placement="floating"
+        placeholder="0.000000"
+        [value]="filters.coordinates.value?.lng ?? ''"
+        readonly
+        [disabled]="!filters.coordinates.enabled"
+      ></ion-input>
+    
+      <app-coord-picker
+        [style]="'search-card-style'"
+        [size]="'large'"
+        [color]="'tertiary'"
+        [lat]="filters.coordinates.value?.lat || 0.0"
+        [lng]="filters.coordinates.value?.lng || 0.0"
+        [disabled]="!filters.coordinates.enabled"
+        (coordinatesChange)="onCoordinatesChanged($event)"
+      ></app-coord-picker>
+    </ion-item>
+
+    <!-- Radio de distancia -->
+    <ion-item lines="full" class="ion-margin-vertical">
+      <ion-checkbox 
+        [(ngModel)]="filters.radius.enabled"
+        [ngModelOptions]="{ standalone: true }"
+        name="radius-enabled"
+        slot="start"
+      ></ion-checkbox>
+      <ion-range 
+        class="ion-margin-horizontal"
+        labelPlacement="stacked" 
+        label="Radio de búsqueda (km)"
+        aria-label="Custom range"
+        [min]="5"
+        [max]="100"
+        [value]="filters.radius.value"
+        [disabled]="!filters.radius.enabled"
+        [pin]="true"
+        >
+        <!-- <ion-label slot="start">5 km</ion-label> -->
+        <!-- <ion-label slot="end">100 km</ion-label> -->
+      </ion-range>
+    </ion-item>
+
+    <!-- Ordenar por -->
+    <ion-item lines="full" class="ion-margin-vertical">
+      <ion-checkbox 
+        [(ngModel)]="filters.sortBy.enabled"
+        [ngModelOptions]="{ standalone: true }"
+        name="sortBy-enabled"
+        slot="start"
+      ></ion-checkbox>
+      <ion-select 
+        id="sortBySelect"
+        class="ion-margin"
+        label="Ordenar por" 
+        label-placement="floating"
+        fill="outline"
+        [(ngModel)]="filters.sortBy.value"
+        [ngModelOptions]="{ standalone: true }"
+        [disabled]="!filters.sortBy.enabled"
+      >
+        <ion-select-option value="relevance">Relevancia</ion-select-option>
+        <ion-select-option value="distance">Distancia</ion-select-option>
+        <ion-select-option value="rating">Valoración</ion-select-option>
+      </ion-select>
+    </ion-item>
+
+    <!-- Botón Buscar -->
+    <div class="search-footer ion-padding">
+      <ion-button 
+        (click)="emitSearch()" 
+        color="primary"
+        [disabled]="isSearchDisabled"
+      >
+        Buscar
+      </ion-button>
+    </div>
+  <!-- </ion-card-content>
+</ion-card> -->

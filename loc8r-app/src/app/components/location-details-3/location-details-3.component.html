@@ -1,0 +1,99 @@
+<ion-content>
+  <p>Estás viendo la location con id: {{ locationId }}</p>
+
+  <div *ngIf="isLoading">Cargando location...</div>
+
+  <div *ngIf="errorMsg">
+    <p style="color: red;">{{ errorMsg }}</p>
+  </div>
+
+  <div *ngIf="!isLoading && !errorMsg && location">
+    <img [src]="location.imageUrl" alt="Imagen de la location" width="300" height="200">
+
+    <p><strong>Nombre:</strong> {{ location.name }}</p>
+    <p><strong>Número de reviews:</strong> {{ location.numReviews }}</p>
+    <p><strong>Rating:</strong> {{ location.rating }}</p>
+
+    <button (click)="testClick()">Haz click</button><hr>
+
+    <button (click)="editLocation()">Editar</button><hr>
+    <button (click)="deleteLocation()">Eliminar</button><hr>
+
+    <hr>
+    <div id="comments-block">
+      <div id="add-comment" class="ion-padding">
+        <h3>Añadir comentario</h3>
+        <form (submit)="onSubmit(); $event.preventDefault()">
+          
+          <!-- Author -->
+          <ion-item>
+            <ion-label position="floating">Autor *</ion-label>
+            <ion-input #authorInput required></ion-input>
+          </ion-item>
+          <ion-note color="danger" *ngIf="showError && !authorValue">El nombre del autor es obligatorio.</ion-note>
+      
+          <!-- Review text -->
+          <ion-item>
+            <ion-label position="floating">Comentario *</ion-label>
+            <ion-textarea #reviewTextInput maxlength="1000" [counter]="true" required></ion-textarea>
+          </ion-item>
+          <ion-note color="danger" *ngIf="showError && !reviewTextValue">El comentario es obligatorio.</ion-note>
+      
+          <!-- Rating -->
+          <ion-item>
+            <ion-label position="stacked">Rating (0–5) *</ion-label>
+            <ion-select #ratingInput interface="popover" placeholder="Selecciona una puntuación" required>
+              <ion-select-option *ngFor="let r of [0,1,2,3,4,5]" [value]="r">{{ r }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+          <ion-note color="danger" *ngIf="showError && ratingValue === null">Selecciona una puntuación.</ion-note>
+      
+          <!-- Coordinates -->
+          <ion-item>
+            <ion-label position="floating">Coordenadas (long, lat) *</ion-label>
+            <ion-input #coordsInput placeholder="-1.9822, 41.9876" required></ion-input>
+          </ion-item>
+          <ion-note color="danger" *ngIf="showError && !coordsValue">Debes introducir coordenadas.</ion-note>
+          <ion-note color="danger" *ngIf="invalidCoords">El formato debe ser: longitud, latitud (ej. -1.98, 41.98)</ion-note>
+
+          <ion-button expand="block" type="submit">Enviar comentario</ion-button>
+        </form>
+      </div>
+
+      <div id="comments-list">
+        <h3>Comentarios</h3>
+
+        <!-- Si ya no se cargan y no hay reviews -->
+        <div *ngIf="!reviewsLoading && reviews.length === 0">
+          <p>No hay comentarios todavía.</p>
+        </div>
+
+        <!-- Lista de reviews -->
+        <ul *ngIf="reviews.length > 0">
+          <li *ngFor="let review of reviews">
+            <p>{{review.id}} {{ review.author || 'Anónimo' }} {{ review.createdOn | date:'short' }}</p>
+            <ion-button color="danger" size="small" fill="clear" (click)="alertDeleteReview(review.id)">
+              Eliminar
+            </ion-button>
+          </li>
+        </ul>
+
+        <!-- Mientras se cargan -->
+        <div *ngIf="reviewsLoading && reviews.length === 0">
+          <p>Cargando comentarios...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Infinite Scroll -->
+  <ion-infinite-scroll 
+    (ionInfinite)="loadMore($event)"
+    [disabled]="reviewsFinished"
+  >
+    <ion-infinite-scroll-content 
+      loadingText="Please wait..." 
+      loadingSpinner="bubbles"
+    ></ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+</ion-content>

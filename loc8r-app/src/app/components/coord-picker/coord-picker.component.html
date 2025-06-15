@@ -1,0 +1,24 @@
+<!-- Estilo por defecto -->
+<ion-button
+  *ngIf="style === 'default-style'"
+  [size]="size"
+  [color]="color"
+  [disabled]="disabled"
+  (click)="openModal()"
+>
+  {{ title }}
+</ion-button>
+
+<!-- Estilo tipo search-card-style -->
+<ion-button
+  *ngIf="style === 'search-card-style'"
+  fill="outline"
+  slot="end"
+  [color]="color"
+  [size]="size"
+  [disabled]="disabled"
+  (click)="openModal()"
+  aria-label="Editar coordenadas"
+>
+  <ion-icon name="location-outline" slot="icon-only"></ion-icon>
+</ion-button>

@@ -1,0 +1,22 @@
+<ion-card class="review-card">
+  <ion-card-content>
+    <div class="header-row">
+      <div class="author-name">{{ review.author }}</div>
+      <!-- <app-rating-simple [rating]="review.rating" size="small"></app-rating-simple> -->
+      <div class="rating-value">{{ review.rating }}/5</div>
+    </div>
+
+    <p class="review-text">{{ review.reviewText }}</p>
+
+    <div class="footer-row">
+      <div class="published-date">Publicado el {{ review.createdOn | date:'mediumDate' }}</div>
+
+      <div *ngIf="hasCoordinates()" class="location-coordinates">
+        <ion-icon name="location-outline"></ion-icon>
+        <a [href]="geolocationUrl()" target="_blank" rel="noopener noreferrer">
+          {{ review.coordinates[0] }}, {{ review.coordinates[1] }}
+        </a>
+      </div>
+    </div>
+  </ion-card-content>
+</ion-card>

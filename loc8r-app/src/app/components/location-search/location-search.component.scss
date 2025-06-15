@@ -1,0 +1,27 @@
+.filters-container {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  
+    .filter-item {
+      flex: 1 1 150px;
+    }
+  }
+  
+  .results-container {
+    min-height: 200px;
+  }
+  
+  .pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+  
+    .page-info {
+      font-weight: bold;
+      font-size: 1rem;
+      line-height: 32px;
+    }
+  }
+  

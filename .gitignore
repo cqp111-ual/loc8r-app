@@ -1,0 +1,21 @@
+# Ignorar todo por defecto
+*
+
+# Incluir carpetas y su contenido recursivo
+!loc8r-app/
+!loc8r-app/**
+
+!build/
+!build/**
+
+!ci-cd/
+!ci-cd/**
+
+!deploy/
+!deploy/**
+
+# No ignores estos archivos de control
+!.gitignore
+!.dockerignore
+!README.md
+!LICENSE

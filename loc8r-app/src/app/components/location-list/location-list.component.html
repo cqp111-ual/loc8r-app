@@ -1,0 +1,15 @@
+<ion-content>
+  <ion-list *ngIf="locations.length > 0; else noResults">
+    <div
+      *ngFor="let loc of locations"
+      [routerLink]="loc.detailUrl || '/locations/' + loc.id"
+      style="margin-bottom: 1rem; text-decoration: none;"
+    >
+      <app-location-card [location]="loc"></app-location-card>
+    </div>
+  </ion-list>
+  
+  <ng-template #noResults>
+    <p>Cargando o sin resultados.</p>
+  </ng-template>
+</ion-content>

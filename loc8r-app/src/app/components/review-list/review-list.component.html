@@ -1,0 +1,10 @@
+<div class="review-list">
+  <h1>Reviews</h1>
+  <ul>
+    <li *ngFor="let review of reviews">
+      <p><strong>{{ review.author }}</strong> ({{ review.rating }}/5)</p>
+      <p>{{ review.reviewText }}</p>
+      <p><em>{{ review.createdOn | date }}</em></p>
+    </li>
+  </ul>
+</div>

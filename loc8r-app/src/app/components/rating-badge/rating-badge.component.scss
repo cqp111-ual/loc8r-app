@@ -1,0 +1,47 @@
+.rating-score {
+    display: inline-block; 
+    font-weight: bold;
+    padding: 0.5rem 0.75rem;
+    border-radius: 10px;
+    color: #fff;
+    text-align: center;
+    
+    &.large {
+        font-size: 2rem;
+    }
+    
+    &.medium {
+        font-size: 1.5rem;
+    }
+
+    &.small {
+        font-size: 1rem;
+    }
+
+    &.x-small {
+        font-size: 0.85rem;
+    }
+
+    &.xx-small {
+        padding: 0.25rem 0.6rem;
+        font-size: 0.75rem;
+    }
+
+}
+  
+.rating-zero {
+    background-color: #999;
+}
+  
+.rating-bad {
+    background-color: #e74c3c;
+}
+  
+.rating-average {
+    background-color: #f39c12;
+}
+  
+.rating-good {
+    background-color: #27ae60;
+}
+  

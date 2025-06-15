@@ -1,0 +1,88 @@
+<ion-content class="ion-padding">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Importar Lugares</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <!-- Filtros de busqueda -->
+  <ion-accordion-group class="ion-margin-bottom">
+    <ion-accordion value="filters">
+      <ion-item slot="header" color="light">
+        <ion-label>Filtros de búsqueda</ion-label>
+      </ion-item>
+      <div slot="content">
+        <app-fsq-search-card (search)="onSearch($event)"></app-fsq-search-card>
+      </div>
+    </ion-accordion>
+  </ion-accordion-group>
+
+  <!-- Cargando -->
+  <div *ngIf="isLoading" class="loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Buscando lugares...</p>
+  </div>
+
+  <!-- Resultados -->
+  <ion-list lines="full" *ngIf="!isLoading && results.length > 0">
+    <ion-item class="place-item" *ngFor="let item of results">
+      <ion-checkbox
+        slot="start"
+        [checked]="selectedIds.includes(item.id)"
+        (ionChange)="toggleSelection(item)"
+        [disabled]="
+          !selectedIds.includes(item.id) && selectedIds.length >= maxSelectable
+        "
+      ></ion-checkbox>
+
+      <!-- Imagen -->
+      <ion-avatar slot="start">
+        <img
+          [src]="item.imageUrl || 'assets/placeholder.jpg'"
+          alt="Imagen de {{ item.name }}"
+        />
+      </ion-avatar>
+
+      <!-- Contenido -->
+      <ion-label class="place-label">
+        <!-- Título + Rating -->
+        <div class="place-header">
+          <h2>{{ item.name }}</h2>
+          <app-rating-badge
+            [rating]="item.rating"
+            [size]="'xx-small'"
+            class="rating-badge"
+          ></app-rating-badge>
+        </div>
+
+        <!-- Dirección con icono y enlace -->
+        <p>
+          <ion-icon slot="start" name="location"></ion-icon>
+          <a
+            [href]="'https://www.google.com/maps?q=' + item.coordinates[0] + ',' + item.coordinates[1]"
+            target="_blank"
+            rel="noopener"
+          >
+            {{ item.address }}
+          </a>
+        </p>
+      </ion-label>
+    </ion-item>
+  </ion-list>
+
+  <div *ngIf="!isLoading && results.length === 0" class="no-results">
+    <ion-icon name="search-outline" size="large" color="medium"></ion-icon>
+    <p>No se han encontrado resultados.</p>
+  </div>
+
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-button
+      color="tertiary"
+      (click)="onImportClick()"
+      [disabled]="importing || selectedIds.length === 0"
+    >
+      Importar ({{ selectedIds.length }}/{{ maxSelectable }})
+    </ion-button>
+  </ion-fab>
+
+</ion-content>

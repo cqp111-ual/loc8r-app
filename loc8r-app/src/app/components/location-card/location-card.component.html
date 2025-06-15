@@ -1,0 +1,28 @@
+<ion-card class="location-card">
+  <img
+    class="location-card-image"
+    [src]="location.imageUrl"
+    [alt]="location.name"
+  />
+  <ion-card-header>
+    <ion-card-title class="location-name">{{ location.name }}</ion-card-title>
+    <ion-card-subtitle>{{ location.address }}</ion-card-subtitle>
+  </ion-card-header>
+
+  <ion-card-content>
+    <div class="rating-container">
+      <div class="rating-box" [ngClass]="ratingClass">
+        {{ ratingDecimal }}
+      </div>
+      <div class="rating-message"><strong>{{ ratingMessage }}</strong></div>
+      <div class="reviews-count">{{ reviewsCount }} reseñas</div>
+    </div>
+
+    <div class="location-coordinates">
+      <ion-icon name="location-outline"></ion-icon>
+      <a [href]="geolocationUrl" target="_blank" rel="noopener noreferrer">
+        {{ location.coordinates[0] }}, {{ location.coordinates[1] }}
+      </a>
+    </div>
+  </ion-card-content>
+</ion-card>

@@ -1,0 +1,13 @@
+# version: "3.9"
+
+services:
+  loc8r-app:
+    image: loc8r-app:dev
+    build:
+      context: ../
+      dockerfile: ./build/Dockerfile
+    container_name: loc8r-app
+    ports:
+      - "8200:80"
+    environment:
+      - NODE_ENV=development

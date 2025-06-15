@@ -1,0 +1,14 @@
+# version: "3.9"
+
+services:
+  loc8r-webapp:
+    build: .
+    image: loc8r-webapp:dev
+    container_name: loc8r-webapp
+    # volumes:
+    #   - ./loc8rApp:/app
+    #   - /app/node_modules
+    ports:
+      - "8200:80"
+    environment:
+      - NODE_ENV=development

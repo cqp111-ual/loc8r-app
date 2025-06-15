@@ -1,0 +1,20 @@
+// .test-item.valid ion-input {
+//     --highlight-color: var(--ion-color-success);
+// }
+
+// .test-item.invalid ion-input {
+//     --highlight-color: var(--ion-color-danger);
+// }
+
+.test-item.valid .status-icon {
+    color: var(--ion-color-success);
+  }
+  
+  .test-item.invalid .status-icon {
+    color: var(--ion-color-danger);
+  }
+  
+  .test-item:not(.valid):not(.invalid) .status-icon {
+    color: var(--ion-color-medium);
+  }
+  

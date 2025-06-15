@@ -1,0 +1,23 @@
+ion-input {
+  --highlight-color-valid: var(--ion-color-primary);
+}
+
+ion-select {
+  --highlight-color-valid: var(--ion-color-primary);
+}
+
+ion-textarea {
+  --highlight-color-valid: var(--ion-color-primary);
+}
+
+.status-icon.valid {
+  color: var(--ion-color-success);
+}
+
+.status-icon.invalid {
+  color: var(--ion-color-danger);
+}
+
+.status-icon.unchanged {
+  color: var(--ion-color-medium);
+}
