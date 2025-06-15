@@ -1,0 +1,240 @@
+// Reset directory, clone clean repo
+def git_clone(String targetDir) {
+  echo "Purging directory ${targetDir} (only if exists)..."
+  sh """
+    if [ -d "${targetDir}" ]; then
+      echo "Deleting ${targetDir}..."
+      chmod -Rf 777 ${targetDir} || true
+      rm -rf ${targetDir}
+    fi
+  """
+  echo "Cloning repository ${env.GIT_REPO_URL} to ${targetDir}..."
+  dir(targetDir) {
+    git branch: "${env.GIT_BRANCH}",
+        credentialsId: "${env.GIT_CRED_ID}",
+        url: "${env.GIT_REPO_URL}"
+    sh 'ls -la'
+    sh 'pwd'
+
+    env.GIT_COMMIT_SHORT = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+    echo "Referred git commit: ${env.GIT_COMMIT_SHORT}"
+  }
+}
+
+pipeline {
+  agent {
+    label 'cnsa-bld-01'
+  }
+
+  environment {
+    // General
+    APP_DIR = "loc8r-app"
+
+    // Git
+    GIT_REPO_URL = 'git@github.com:cqp111-ual/loc8r-app.git'
+    GIT_BRANCH = 'main'
+    GIT_CRED_ID = 'git-loc8r-app'
+    // GIT_COMMIT_SHORT = '' // to store git commit value
+
+    // Docker
+    DOCKER_IMAGE_NAME = "loc8r-app"
+    // DOCKER_IMAGE_TAG = 'latest' // default
+    DOCKER_REPO_NAME = "cqp111"
+    DOCKER_REPO_CRED_ID = 'dockerhub_cqp111'
+
+    // Code analysis
+    SONARQUBE_ENV = 'sonarqube.cqp111-ual.tech'
+
+    // Build
+    BUILD_IONIC_ENVIRONMENT_CRED_ID = "loc8r-app-prod-env"
+
+    // Deployment
+    DEPLOY_CRED_ID = "ssh-cnsa-dpl-01"
+    DEPLOY_HOST_CRED_ID = "loc8r-app-dpl-host"
+    DEPLOY_DIR_CRED_ID = "loc8r-app-dpl-dir"
+
+    // Notifications
+    DISCORD_CRED_ID = 'discord-notifications'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        script {
+          git_clone(env.APP_DIR)
+        }
+      }
+    }
+
+    stage('SonarQube Analysis') {
+      steps {
+        // Create scannerwork folder with sufficient permissions
+        sh "mkdir ${env.APP_DIR}/.scannerwork"
+        sh "chmod -R 777 ${env.APP_DIR}"
+
+        dir("${env.APP_DIR}") {
+          echo "Running SonarQube analysis..."
+
+          withSonarQubeEnv("${env.SONARQUBE_ENV}") {
+            sh 'docker run --rm \
+                -e SONAR_HOST_URL="$SONAR_HOST_URL" \
+                -e SONAR_TOKEN="$SONAR_AUTH_TOKEN" \
+                -v "$PWD:/usr/src" \
+                sonarsource/sonar-scanner-cli \
+                -Dsonar.projectKey=loc8r-app \
+                -Dsonar.working.directory=.scannerwork \
+                -Dsonar.projectName="loc8r-app" \
+                -Dsonar.projectVersion=1.0 \
+                -Dsonar.sourceEncoding=UTF-8'
+          }
+        }
+      }
+    }
+
+    // Clear tests and analysis files... remove and clone repo again
+    stage('Clean and checkout for Docker build') {
+      steps {
+        script{
+          git_clone(env.APP_DIR)
+        }
+      }
+    }
+
+    stage('Build image locally and push') {
+      steps {
+        script {
+          // Set image tag
+          def commitShort = env.GIT_COMMIT_SHORT?.trim()
+          def imageTag = (commitShort && commitShort != '') ? commitShort : 'latest'
+
+          // Set image names
+          def localImage = "${env.DOCKER_IMAGE_NAME}:${imageTag}"
+          def remoteImage = "${env.DOCKER_REPO_NAME}/${env.DOCKER_IMAGE_NAME}:${imageTag}"
+          def latestRemoteImage = "${env.DOCKER_REPO_NAME}/${env.DOCKER_IMAGE_NAME}:latest"
+
+          // Build image locally
+          dir("${env.APP_DIR}") {
+            withCredentials([file(credentialsId: env.BUILD_IONIC_ENVIRONMENT_CRED_ID, variable: 'ENVIRONMENT_TS')]) {
+                // Copy environment file to the correct location
+                echo "Copying environment file before build: ${ENVIRONMENT_TS}"
+                sh "cp ${ENVIRONMENT_TS} loc8r-app/src/environments/environment.prod.ts"
+                sh "cp ${ENVIRONMENT_TS} loc8r-app/src/environments/environment.ts"
+
+                echo "Building Docker image locally: ${localImage}"
+                sh "docker build -t ${localImage} -f build/Dockerfile ."
+                echo "Docker image ${localImage} built successfully"
+            }
+          }
+
+          // Push images
+          withCredentials([usernamePassword(credentialsId: "${DOCKER_REPO_CRED_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+            script {
+              sh "echo \"$DOCKER_PASS\" | docker login -u \"$DOCKER_USER\" --password-stdin"
+
+              echo "Tagging local image as:"
+              echo "   - ${remoteImage}"
+              echo "   - ${latestRemoteImage}"
+
+              sh "docker tag ${localImage} ${remoteImage}"
+              sh "docker tag ${localImage} ${latestRemoteImage}"
+
+
+              echo "Uploading image ${remoteImage}..."
+              sh "docker push ${remoteImage}"
+              echo "Image ${remoteImage} successfully uploaded."
+
+              echo "Uploading image ${latestRemoteImage}..."
+              sh "docker push ${latestRemoteImage}"
+              echo "Image ${latestRemoteImage} successfully uploaded."
+
+              sh "docker logout"
+            }
+          }
+        }
+      }
+    }
+
+    stage('Deploy to production') {
+      steps {
+        // credentials for ssh
+        withCredentials([
+          sshUserPrivateKey(credentialsId: env.DEPLOY_CRED_ID, keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER'),
+          string(credentialsId: env.DEPLOY_HOST_CRED_ID, variable: 'DEPLOY_HOST'),
+          string(credentialsId: env.DEPLOY_DIR_CRED_ID, variable: 'DEPLOY_DIR')
+        ]) {
+          // start ssh agent (load private key)
+          sshagent([env.DEPLOY_CRED_ID]) {
+
+            script {
+              echo "Starting deployment process..."
+
+              // Step 1: Clone repo locally
+              git_clone(env.APP_DIR)
+
+              def remoteComposeFile = "${DEPLOY_DIR}/docker-compose.yml"
+              def localComposeFile = "${env.APP_DIR}/deploy/docker-compose-prod.yml"
+
+              // Step 2: Check if docker-compose.yml exists remotely and bring down container if it does
+              sh """
+                echo "Checking if remote docker-compose file exists..."
+                ssh -o StrictHostKeyChecking=no ${SSH_USER}@${DEPLOY_HOST} '
+                  if [ -f "${remoteComposeFile}" ]; then
+                    echo "docker-compose.yml found, bringing down running containers..."
+                    docker compose -f "${remoteComposeFile}" down || true
+                  else
+                    echo "No docker-compose.yml found, skipping docker compose down"
+                  fi
+                '
+              """
+
+              // Step 3.1: Copy new docker-compose-prod.yml to remote as docker-compose.yml
+              sh """
+                echo "Copying new docker-compose file to remote..."
+                scp -o StrictHostKeyChecking=no ${localComposeFile} ${SSH_USER}@${DEPLOY_HOST}:${remoteComposeFile}
+              """
+
+              // Step 4: Pull latest docker image on remote
+              sh """
+                echo "Pulling latest docker images using docker compose pull..."
+                ssh -o StrictHostKeyChecking=no ${SSH_USER}@${DEPLOY_HOST} '
+                  cd ${DEPLOY_DIR}
+                  docker compose pull
+                '
+              """
+
+              // Step 5: Bring up containers with new compose file
+              sh """
+                echo "Starting containers with updated compose file..."
+                ssh -o StrictHostKeyChecking=no ${SSH_USER}@${DEPLOY_HOST} '
+                  cd ${DEPLOY_DIR}
+                  docker compose up -d
+                '
+              """
+
+              echo "Deployment completed!"
+            }
+          }
+        }
+      }
+    }
+
+  }
+
+  post {
+    always {
+      script {
+        def result = currentBuild.result ?: 'SUCCESS'
+        withCredentials([string(credentialsId: DISCORD_CRED_ID, variable: 'WEBHOOK')]) {
+          discordSend (
+            webhookURL: WEBHOOK,
+              title: "Pipeline: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+              link: env.BUILD_URL,
+              description: "Estado del pipeline: **${result}**",
+              footer: "Sonar + Discord Notifier",
+              result: result
+          )
+        }
+      }
+    }
+  }
+}

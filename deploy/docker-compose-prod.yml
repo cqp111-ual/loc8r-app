@@ -1,14 +1,26 @@
-# version: "3.9"
+networks:
+  traefik-proxy:
+    external: true
 
 services:
-  loc8r-webapp:
-    build: .
-    image: loc8r-webapp:dev
-    container_name: loc8r-webapp
-    # volumes:
-    #   - ./loc8rApp:/app
-    #   - /app/node_modules
-    ports:
-      - "8200:80"
-    environment:
-      - NODE_ENV=development
+  loc8r-app:
+    image: cqp111/loc8r-app:latest
+    container_name: loc8r-app
+    networks:
+      - traefik-proxy
+    mem_limit: 256m
+    cpus: 1.0
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.providers.docker.network=traefik-proxy"
+      - "traefik.http.services.loc8r-app.loadbalancer.server.port=80"
+      # HTTP Traffic (port 80)
+      - "traefik.http.routers.loc8r-app-http.entrypoints=web"
+      - "traefik.http.routers.loc8r-app-http.rule=Host(`loc8r-app.cqp111-ual.tech`)"
+      - "traefik.http.routers.loc8r-app-http.middlewares=redirect-to-https@file"
+      # HTTPS Traffic (port 443)
+      - "traefik.http.routers.loc8r-app-https.entrypoints=websecure"
+      - "traefik.http.routers.loc8r-app-https.tls=true"
+      - "traefik.http.routers.loc8r-app-https.rule=Host(`loc8r-app.cqp111-ual.tech`)"
+      - "traefik.http.routers.loc8r-app-https.service=loc8r-app"
