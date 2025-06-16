@@ -30,10 +30,10 @@ import {
   ToastController
 } from '@ionic/angular/standalone';
 @Component({
-  selector: 'app-test-search',
+  selector: 'app-fsq-import',
   standalone: true,
-  templateUrl: './test-search.component.html',
-  styleUrls: ['./test-search.component.scss'],
+  templateUrl: './fsq-import.component.html',
+  styleUrls: ['./fsq-import.component.scss'],
   imports: [ 
     ImageVisualizerComponent,
     FsqSearchCardComponent,
@@ -59,7 +59,7 @@ import {
     IonSpinner
   ]
 })
-export class TestSearchComponent  implements OnInit {
+export class FsqImportComponent  implements OnInit {
 
   selectedIds: string[] = [];
   maxSelectable = 10;

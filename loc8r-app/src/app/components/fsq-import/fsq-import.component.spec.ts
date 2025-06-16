@@ -1,19 +1,19 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { IonicModule } from '@ionic/angular';
 
-import { TestSearchComponent } from './test-search.component';
+import { FsqImportComponent } from './fsq-import.component';
 
-describe('TestSearchComponent', () => {
-  let component: TestSearchComponent;
-  let fixture: ComponentFixture<TestSearchComponent>;
+describe('FsqImportComponent', () => {
+  let component: FsqImportComponent;
+  let fixture: ComponentFixture<FsqImportComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ TestSearchComponent ],
+      declarations: [ FsqImportComponent ],
       imports: [IonicModule.forRoot()]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(TestSearchComponent);
+    fixture = TestBed.createComponent(FsqImportComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   }));

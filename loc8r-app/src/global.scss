@@ -35,3 +35,21 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import '@ionic/angular/css/palettes/dark.system.css';
+
+
+
+/* Custom Global Styles */
+.content-container {
+    width: 100%;
+    max-width: 1400px;     // Máximo ancho cuando la pantalla es muy grande
+    margin: 0 auto;
+    padding: 16px 16px;
+  
+    @media (max-width: 992px) {
+      max-width: 900px;
+    }
+  
+    @media (max-width: 768px) {
+      max-width: 100%;
+    }
+}
