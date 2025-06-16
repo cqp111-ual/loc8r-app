@@ -5,9 +5,14 @@ export const routes: Routes = [
     path: '',
     component: TabsComponent,
     children: [
+      // {
+      //   path: 'home',
+      //   loadComponent: () => import('./home/home.page').then((m) => m.HomePage),
+      // },   
+      
       {
         path: 'home',
-        loadComponent: () => import('./home/home.page').then((m) => m.HomePage),
+        loadComponent: () => import('./components/landing-page/landing-page.component').then((m) => m.LandingPageComponent),
       },    
       {
         path: 'locations',

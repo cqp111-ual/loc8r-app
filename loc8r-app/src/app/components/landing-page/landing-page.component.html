@@ -1,0 +1,44 @@
+<ion-content class="landing-container">
+  <ion-grid class="ion-justify-content-center">
+    <ion-row class="landing-wrapper ion-align-items-center" responsive-sm>
+      <!-- Columna derecha (mostrada primero en móviles) -->
+      <ion-col size="12" size-md="6" class="right order-1 order-md-2">
+        <img src="assets/images/logo.png" alt="Logo" class="logo" />
+        <div class="auth-box ion-margin">
+          <h1 class="title">¡Bienvenido a Nuestra App!</h1>
+
+          <ion-button expand="block" fill="solid" class="btn-login" color="primary">
+            Iniciar sesión
+          </ion-button>
+
+          <div class="separator">
+            <span>¿No tienes una cuenta?</span>
+            <ion-button size="small" fill="clear" class="btn-register" color="success">
+              Registrarse
+            </ion-button>
+          </div>
+
+          <ion-button expand="block" fill="outline" class="btn-guest">Continuar como invitado</ion-button>
+          <ion-button expand="block" fill="outline" class="btn-explore">Explorar</ion-button>
+        </div>
+      </ion-col>
+
+      <!-- Columna izquierda -->
+      <ion-col size="12" size-md="6" class="left order-2 order-md-1">
+        <ion-card class="card-left">
+          <img src="assets/images/illustration.png" alt="Imagen bienvenida" class="main-img" />
+          <div class="info-section ion-padding ion-color-light">
+            <ion-text>
+              <h2>Prepárate para:</h2>
+              <ul>
+                <li>Ofertas exclusivas para miembros</li>
+                <li>Sigue tus búsquedas desde cualquier dispositivo</li>
+                <li>Alertas personalizadas para ahorrar</li>
+              </ul>
+            </ion-text>
+          </div>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>

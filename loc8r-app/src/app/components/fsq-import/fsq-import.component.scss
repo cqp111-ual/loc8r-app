@@ -1,3 +1,23 @@
+.custom-accordion {
+  background: var(--ion-color-light);
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+
+  ion-item {
+    --border-radius: 12px 12px 0 0;
+    font-weight: 500;
+  }
+
+  [slot="content"] {
+    padding: 12px;
+    background-color: #fdfdfd;
+    border-top: 1px solid #ddd;
+  }
+}
+
+
 .loading-container,
 .no-results {
   display: flex;

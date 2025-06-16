@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { HeaderComponent } from '../header/header.component';
 import {
   IonList,
   IonButton,
@@ -30,6 +31,7 @@ import { LocationCardComponent } from '../location-card/location-card.component'
   templateUrl: './location-search.component.html',
   styleUrls: ['./location-search.component.scss'],
   imports: [
+    HeaderComponent,
     IonList,
     CommonModule,
     IonButton,

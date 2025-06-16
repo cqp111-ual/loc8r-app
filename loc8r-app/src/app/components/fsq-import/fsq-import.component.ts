@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { HeaderComponent } from '../header/header.component';
 import { FsqSearchCardComponent } from '../fsq-search-card/fsq-search-card.component';
 import { CommonModule } from '@angular/common';
 import { LocationFSQ } from '../../interfaces/location.interface';
@@ -35,6 +36,7 @@ import {
   templateUrl: './fsq-import.component.html',
   styleUrls: ['./fsq-import.component.scss'],
   imports: [ 
+    HeaderComponent,
     ImageVisualizerComponent,
     FsqSearchCardComponent,
     RatingBadgeComponent,

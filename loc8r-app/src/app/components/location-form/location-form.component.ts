@@ -1,6 +1,7 @@
 import { Component, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgForm, FormsModule, NgModel } from '@angular/forms';
+import { HeaderComponent } from '../header/header.component';
 import { LocationService } from '../../services/location.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser'; 
 import { Camera, CameraResultType } from '@capacitor/camera'; 
@@ -41,6 +42,7 @@ interface FormField<T = any> {
   templateUrl: './location-form.component.html',
   styleUrls: ['./location-form.component.scss'],
   imports: [
+    HeaderComponent,
     CommonModule,
     FormsModule,
     IonContent, 
