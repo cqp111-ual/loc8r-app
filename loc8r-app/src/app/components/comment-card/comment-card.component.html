@@ -1,0 +1,43 @@
+<ion-card class="comment-card ion-padding">
+  <ion-item lines="none" class="comment-header" style="--background: transparent">
+    <ion-avatar slot="start">
+      <img [src]="'https://ui-avatars.com/api/?name=' + review.author" alt="Avatar" />
+    </ion-avatar>
+
+    <ion-label>
+      <h2 class="author"><strong>{{ review.author }}</strong></h2>
+      <p class="date">{{ formattedDate }}</p>
+    </ion-label>
+
+    <div slot="end" class="actions">
+      <app-rating-badge
+        [rating]="review.rating"
+        [size]="'xx-small'"
+        class="rating-badge"
+      ></app-rating-badge>
+    </div>
+  </ion-item>
+
+  <ion-card-content class="comment-body">
+    <p class="review-text">{{ review.reviewText }}</p>
+  </ion-card-content>
+
+  <div class="comment-footer">
+    <div class="location-link">
+      <ion-icon slot="start" color="danger" name="location" class="location-icon"></ion-icon>
+      <a [href]="googleMapsLink" target="_blank" rel="noopener" class="location-anchor">
+        Ver en el mapa
+      </a>
+    </div>
+
+    <ion-button
+      *ngIf="isLoggedIn"
+      size="small"
+      color="danger"
+      class="trash-button"
+      (click)="deleteReview.emit(review.id)"
+    >
+      <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+    </ion-button>
+  </div>
+</ion-card>

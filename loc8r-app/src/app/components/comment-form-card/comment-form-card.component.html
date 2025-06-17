@@ -1,0 +1,100 @@
+<form [formGroup]="form" (submit)="onSubmit(); $event.preventDefault()">
+
+  <!-- Autor -->
+  <ion-item lines="full" class="ion-no-padding">
+    <ion-input
+    class="ion-margin-vertical"
+      fill="outline"
+      label="Autor (*)"
+      label-placement="floating"
+      placeholder="Tu nombre aquí..."
+      formControlName="author"
+    ></ion-input>
+  </ion-item>
+  <ion-note color="danger" slot="helper" *ngIf="form.get('author')?.touched && form.get('author')?.invalid">
+    El nombre del autor es obligatorio.
+  </ion-note>
+
+  <!-- Coordenadas -->
+  <ion-item lines="full" class="ion-margin-top ion-no-padding">
+    <ion-input
+      class="ion-margin-vertical ion-margin-end"
+      fill="outline"
+      label="Ubicación (*)"
+      label-placement="floating"
+      [value]="formatCoordinates()"
+      readonly
+      placeholder="Selecciona unas coordenadas"
+    ></ion-input>
+  
+    <app-coord-picker
+      [style]="'search-card-style'"
+      [size]="'large'"
+      [color]="'tertiary'"
+      [lat]="form.get('coordinates')?.value?.[0] || 0.0"
+      [lng]="form.get('coordinates')?.value?.[1] || 0.0"
+      (coordinatesChange)="onCoordinatesChanged($event)"
+    ></app-coord-picker>
+  </ion-item>
+  <ion-note color="danger" *ngIf="form.get('coordinates')?.touched && form.get('coordinates')?.invalid">
+    Selecciona unas coordenadas válidas.
+  </ion-note>
+  
+  <!-- Rating -->
+  <ion-item lines="full" class="ion-margin-top ion-no-padding">
+    <ion-input
+        class="ion-margin-vertical"
+        fill="outline"
+        label="Rating (0-5) *"
+        label-placement="floating"
+        formControlName="rating"
+        type="number"
+        min="0"
+        max="5"
+        required
+      ></ion-input>
+  </ion-item>
+  <ion-note color="danger" *ngIf="form.get('rating')?.touched && form.get('rating')?.invalid">
+    La puntuación debe estar entre 0 y 5.
+  </ion-note>
+
+  <!-- Comentario -->
+  <ion-item lines="full" class="ion-margin-top ion-no-padding">
+    <ion-textarea
+      class="ion-margin-vertical"
+      fill="outline"
+      label="Comentario (*)"
+      label-placement="floating"
+      formControlName="comment"
+      maxlength="1000"
+      [counter]="true"
+      rows="5"
+      placeholder="Escribe aquí tu comentario..."
+      required
+    ></ion-textarea>
+  </ion-item>
+  <ion-note color="danger" *ngIf="form.get('comment') as commentControl">
+    <ng-container *ngIf="commentControl.touched && commentControl.errors as errors">
+      <ng-container *ngIf="errors['requiredTrimmed']">
+        El comentario es obligatorio y no puede estar vacío.
+      </ng-container>
+      <ng-container *ngIf="errors['maxlength']">
+        El comentario no debe superar los 1000 caracteres.
+      </ng-container>
+    </ng-container>
+  </ion-note>
+
+<!-- Botón alineado a la derecha -->
+<div class="ion-margin-vertical ion-text-end">
+  <ion-button 
+    class="ion-padding-top" 
+    type="submit" 
+    color="primary"
+    [disabled]="form.invalid"
+  >
+    Enviar comentario
+  </ion-button>
+</div>
+
+
+</form>

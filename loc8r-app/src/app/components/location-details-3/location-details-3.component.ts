@@ -8,41 +8,38 @@ import { Review } from '../../interfaces/location.interface'; // ajusta la ruta 
 import { InfiniteScrollCustomEvent } from '@ionic/core';
 import { ToastController, AlertController } from '@ionic/angular';
 import { CustomBackButtonComponent } from '../custom-back-button/custom-back-button.component';
-import {
-  IonContent,
-  IonInfiniteScroll,
-  IonInfiniteScrollContent,
+import { IonicModule } from '@ionic/angular';
+import { HeaderComponent } from '../header/header.component';
+import { ImageVisualizerComponent } from '../image-visualizer/image-visualizer.component';
+import { 
   IonInput,
   IonTextarea,
   IonSelect,
-  IonSelectOption,
-  IonButton,
-  IonLabel,
-  IonNote,
-  IonItem
 } from '@ionic/angular/standalone';
+import { CommentCardComponent } from '../comment-card/comment-card.component';
+import { CommentFormCardComponent } from '../comment-form-card/comment-form-card.component';
 @Component({
   selector: 'app-location-details-3',
   standalone: true,
   templateUrl: './location-details-3.component.html',
   styleUrls: ['./location-details-3.component.scss'],
   imports: [
+    IonicModule,
     CommonModule,
     CustomBackButtonComponent,
-    IonContent,
-    IonInfiniteScroll,
-    IonInfiniteScrollContent,
-    IonInput,
-    IonTextarea,
-    IonSelect,
-    IonSelectOption,
-    IonButton,
-    IonLabel,
-    IonNote,
-    IonItem,
+    CommentCardComponent,
+    HeaderComponent,
+    ImageVisualizerComponent,
+    CommentFormCardComponent
   ]
 })
 export class LocationDetails3Component  implements OnInit {
+
+  // auth
+  isLoggedIn: boolean = true;
+
+  // add review
+  resetReviewForm = false;
 
   // Variables para el formulario de reseñas
   @ViewChild('authorInput') authorInput!: IonInput;
@@ -66,7 +63,7 @@ export class LocationDetails3Component  implements OnInit {
 
   reviews: Review[] = [];
   page = 0;
-  limit = 2;
+  reviewsLimit = 5;
   reviewsLoading = false;
   reviewsFinished = false;
 
@@ -117,15 +114,15 @@ export class LocationDetails3Component  implements OnInit {
     if (!this.location || this.reviewsLoading || this.reviewsFinished) return;
 
     console.log('Cargando reseñas para la location:', this.location.id);
-    console.log(`Página: ${this.page}, Límite: ${this.limit}`);
+    console.log(`Página: ${this.page}, Límite: ${this.reviewsLimit}`);
 
     this.reviewsLoading = true;
-    this.reviewService.getReviews(this.location.id, this.page, this.limit).subscribe({
+    this.reviewService.getReviews(this.location.id, this.page, this.reviewsLimit).subscribe({
       next: paginated => {
         this.reviews.push(...paginated.results);
         this.page++;
         this.reviewsLoading = false;
-        if (paginated.results.length < this.limit) {
+        if (paginated.results.length < this.reviewsLimit) {
           this.reviewsFinished = true;
         }
       },
@@ -134,7 +131,6 @@ export class LocationDetails3Component  implements OnInit {
       }
     });
   }
-  
 
   // Métodos vacíos por ahora
   editLocation() {
@@ -147,6 +143,50 @@ export class LocationDetails3Component  implements OnInit {
 
   addReview(comment: string) {
     console.log('Comentario enviado:', comment);
+  }
+
+  resetForm() {
+    this.resetReviewForm = true;
+    // False para permitir futuros reinicios
+    setTimeout(() => this.resetReviewForm = false, 0);
+  }
+
+  onReviewSubmit(data: {
+    author: string;
+    comment: string;
+    rating: number;
+    coordinates: [number, number];
+  }) {
+    const review = {
+      author: data.author,
+      reviewText: data.comment,
+      rating: data.rating,
+      coordinates: data.coordinates,
+    };
+
+    console.log('Comentario recibido:', review);
+
+    // Llamar al servicio para insertar la reseña
+    this.reviewService.insertReview(this.locationId!, review).subscribe(success => {
+      if (success) {
+        this.presentToast('Review insertada correctamente', 'success');
+        // Limpiar formulario
+        this.resetForm();
+
+        // Recargar la location para actualizar la vista
+        this.reviewsFinished = false;
+        this.loadLocation(this.locationId!); 
+
+        // Recargar reseñas para ver el nuevo comentario
+        const currentLength = this.reviews.length;
+        this.reviews = [];
+        this.page = 0;
+        this.reviewsLimit = currentLength + 1;
+        this.loadReviews();
+      } else {
+        this.presentToast('Error al insertar la review', 'danger');
+      }
+    });
   }
 
   testClick() {
@@ -213,7 +253,7 @@ export class LocationDetails3Component  implements OnInit {
         const currentLength = this.reviews.length;
         this.reviews = [];
         this.page = 0;
-        this.limit = currentLength > 0 ? currentLength - 1 : 10; // Ajusta límite si quieres
+        this.reviewsLimit = currentLength > 0 ? currentLength - 1 : 10; // Ajusta límite si quieres
         this.loadReviews();
       } else {
         this.presentToast('Error al eliminar la review', 'danger');
@@ -278,7 +318,7 @@ export class LocationDetails3Component  implements OnInit {
         const currentLength = this.reviews.length;
         this.reviews = [];
         this.page = 0;
-        this.limit = currentLength + 1;
+        this.reviewsLimit = currentLength + 1;
         this.loadReviews();
       } else {
         this.presentToast('Error al insertar la review', 'danger');
@@ -286,18 +326,7 @@ export class LocationDetails3Component  implements OnInit {
     });
   }
 
-  resetForm() {
-    this.authorInput.value = '';
-    this.reviewTextInput.value = '';
-    this.ratingInput.value = null;
-    this.coordsInput.value = '';
-    this.authorValue = '';
-    this.reviewTextValue = '';
-    this.ratingValue = null;
-    this.coordsValue = '';
-    this.invalidCoords = false; // Reiniciar estado del error
-    this.showError = false; // Reiniciar estado de error
-  }
+
 
 }
 
