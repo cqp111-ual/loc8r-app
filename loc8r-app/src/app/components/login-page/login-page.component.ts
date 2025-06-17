@@ -1,9 +1,10 @@
 import { Component } from '@angular/core';
-import { NavController, ViewWillLeave } from '@ionic/angular';
+import { ViewWillLeave } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormGroup, FormControl, Validators, AbstractControl } from '@angular/forms';
-import { IonicModule, ToastController, LoadingController } from '@ionic/angular';
+import { IonicModule,  } from '@ionic/angular';
+import { ToastController, LoadingController, NavController } from '@ionic/angular/standalone';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { HeaderComponent } from '../header/header.component';
