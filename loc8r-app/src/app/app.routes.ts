@@ -24,7 +24,7 @@ export const routes: Routes = [
       },      
       {
         path: 'locations/:id',
-        loadComponent: () => import('./components/location-details-3/location-details-3.component').then(m => m.LocationDetails3Component)
+        loadComponent: () => import('./components/location-details/location-details.component').then(m => m.LocationDetailsComponent)
       },
       {
         path: 'locations-add',

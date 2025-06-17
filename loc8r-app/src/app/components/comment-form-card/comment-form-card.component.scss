@@ -1,9 +1,14 @@
+ion-item {
+    --background: transparent;
+}
+
 ion-select {
     --highlight-color-valid: var(--ion-color-primary);
     --highlight-color: var(--ion-color-primary);
 }
 
 ion-input {
+    --background: transparent;
     --highlight-color-valid: var(--ion-color-primary);
     --highlight-color: var(--ion-color-primary);
 }

@@ -22,7 +22,7 @@ export class ImageVisualizerComponent {
 
   animationClass = 'zoom-in';
 
-  ImageVisualizerComponent() {
+  constructor() {
     addIcons({ closeOutline });
   }
 

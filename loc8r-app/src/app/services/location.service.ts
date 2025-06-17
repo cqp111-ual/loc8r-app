@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { map } from 'rxjs/operators';
+import { catchError, map, timeout } from 'rxjs/operators';
 import { ApiResponse, PaginatedResults, Location, LocationFSQ, ImportResponse } from '../interfaces/location.interface';
 import { LocationModel } from '../models/location.model';
 
@@ -135,6 +135,18 @@ export class LocationService {
           failed: response.data?.failed ?? [],
         }))
       );
+  }
+
+  // Borrar location
+  deleteLocation(locationId: string): Observable<boolean> {
+    return this.http.delete(`${this.apiUrl}/${locationId}`, { observe: 'response' }).pipe(
+      timeout(5000),
+      map(response => response.status === 200 || response.status === 204),
+      catchError(err => {
+        console.error('Error eliminando ubicación', err);
+        return of(false);
+      })
+    );
   }
   
 }

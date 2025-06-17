@@ -1,161 +1,146 @@
-// location-details.component.ts
-import { Input, AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { addIcons } from 'ionicons';
-import { closeOutline, scanCircleOutline } from 'ionicons/icons';
-import { LocationService } from '../../services/location.service';
-import { ReviewService } from '../../services/review.service';
-import { LocationModel } from '../../models/location.model';
-import { environment } from 'src/environments/environment';
-import { PaginatedResults, Review } from 'src/app/interfaces/location.interface';
-import { ReviewCardComponent } from '../../components/review-card/review-card.component';
-
-import {
-  IonLoading,
-  IonToast,
-  IonSpinner,
-  IonItem,
-  IonIcon,
-  IonButton,
-  IonContent,
-  ModalController,
-  IonInfiniteScrollContent,
-  IonInfiniteScroll,
-  IonImg,
-  IonLabel
-} from '@ionic/angular/standalone';
-
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
+import { LocationService } from '../../services/location.service'; // ajusta la ruta según tu proyecto
+import { LocationModel } from '../../models/location.model'; 
+import { ReviewService } from '../../services/review.service';
+import { Review } from '../../interfaces/location.interface'; // ajusta la ruta según tu proyecto
+import { InfiniteScrollCustomEvent } from '@ionic/core';
+import { ToastController, AlertController } from '@ionic/angular';
+import { CustomBackButtonComponent } from '../custom-back-button/custom-back-button.component';
+import { IonicModule } from '@ionic/angular';
+import { HeaderComponent } from '../header/header.component';
 import { ImageVisualizerComponent } from '../image-visualizer/image-visualizer.component';
-
+import { CommentCardComponent } from '../comment-card/comment-card.component';
+import { CommentFormCardComponent } from '../comment-form-card/comment-form-card.component';
+import { Subscription } from 'rxjs';
+import { AuthService } from '../../services/auth.service';
+import { addIcons } from 'ionicons';
+import { scanCircleOutline, scanOutline, calendarOutline, pencilOutline, trashOutline, ellipsisHorizontalOutline } from 'ionicons/icons';
+import { RatingBadgeComponent } from '../rating-badge/rating-badge.component';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { NavController, ActionSheetController } from '@ionic/angular/standalone';
+import { environment } from 'src/environments/environment';
 @Component({
-  selector: 'app-location-component',
+  selector: 'app-location-details',
   standalone: true,
-  imports: [
-    IonLoading,
-    IonToast,
-    IonSpinner,
-    IonItem,
-    IonLabel,
-    IonContent,
-    IonButton,
-    CommonModule,
-    IonInfiniteScrollContent,
-    IonInfiniteScroll,
-    IonImg,        
-    IonIcon,
-    ImageVisualizerComponent,
-    ReviewCardComponent,
-  ],
   templateUrl: './location-details.component.html',
   styleUrls: ['./location-details.component.scss'],
+  imports: [
+    IonicModule,
+    CommonModule,
+    CustomBackButtonComponent,
+    CommentCardComponent,
+    HeaderComponent,
+    ImageVisualizerComponent,
+    CommentFormCardComponent,
+    RatingBadgeComponent
+  ]
 })
-export class LocationDetailsComponent implements OnInit, AfterViewInit {
+export class LocationDetailsComponent implements OnInit, OnDestroy {
 
-  @ViewChild('content', { static: true }) content!: IonContent;
+  // auth
+  isLoggedIn: boolean = true;
+  private subscription?: Subscription;
+  
+  // add review
+  resetReviewForm = false;
 
-  isLoading = false;
-  showError = false;
-
-  location!: LocationModel;
-  ratingDecimal: string = '0.0';
-  ratingClass: string = 'rating-zero';
+  // Variables para la location
+  locationId: string | null = null;
+  location?: LocationModel;
   ratingMessage: string = '';
   googleMapsEmbedUrl!: SafeResourceUrl;
 
+
+  // other variables...
+  isLoading = false;
+  errorMsg = '';
+
+  // image control
+  showImage: boolean = false;
+
+  // reviews
   reviews: Review[] = [];
   page = 0;
-  limit = 10;
+  reviewsLimit = 6;
   reviewsLoading = false;
   reviewsFinished = false;
-
-  showImage: boolean = false;
 
   constructor(
     private route: ActivatedRoute,
     private locationService: LocationService,
-    private sanitizer: DomSanitizer,
     private reviewService: ReviewService,
-    private modalCtrl: ModalController
+    private toastController: ToastController,
+    private alertController: AlertController,
+    private authService: AuthService,
+    private sanitizer: DomSanitizer,
+    private actionSheetController: ActionSheetController,
+    private navController: NavController,
   ) {
-    addIcons({ closeOutline, scanCircleOutline });
+    addIcons({scanCircleOutline, scanOutline, calendarOutline, pencilOutline, trashOutline, ellipsisHorizontalOutline});
   }
 
   ngOnInit() {
-    const locationId = this.route.snapshot.paramMap.get('id');
-    if (locationId) {
-      this.isLoading = true;  // activamos loading al empezar
-      this.locationService.getLocationById(locationId).subscribe({
-        next: loc => {
-          this.location = loc;
-          this.setRating();
-          const rawUrl = this.getGoogleMapsEmbed(loc.coordinates[0], loc.coordinates[1]);
-          this.googleMapsEmbedUrl = this.sanitizer.bypassSecurityTrustResourceUrl(rawUrl);
-          this.isLoading = false;  // desactivamos loading al acabar bien
-        },
-        error: err => {
-          console.error('Error cargando location', err);
-          this.showError = true;  // mostramos error
-          this.isLoading = false; // desactivamos loading aunque haya error
-        }
-      });
+    this.subscription = this.authService.userObservable$.subscribe(user => {
+      this.isLoggedIn = !!user;
+    });
 
-      this.loadReviews();
-    } else {
-      this.showError = true;
+    this.locationId = this.route.snapshot.paramMap.get('id');
+    if (!this.locationId) {
+      this.errorMsg = 'No se proporcionó ID de la location.';
+      return;
     }
+
+    this.loadLocation(this.locationId);
   }
 
-  ngAfterViewInit() {
-    this.content.ionScroll.subscribe((event) => {
-      const scrollTop = event.detail.scrollTop;
-      const image = document.querySelector('.header-image') as HTMLElement;
+  ngOnDestroy() {
+    this.subscription?.unsubscribe();
+  }
 
-      if (image) {
-        if (scrollTop < 0) {
-          // Zoom cuando scroll arriba del todo
-          const maxScale = 1.5;
-          const scale = Math.min(maxScale, 1 + Math.abs(scrollTop) / 300);
-          image.style.transform = `scale(${scale})`;
+  loadLocation(id: string) {
+    this.isLoading = true;
+    this.errorMsg = '';
+    this.location = undefined;
+
+    this.locationService.getLocationById(id).subscribe({
+      next: (loc) => {
+        if (loc) {
+          this.location = loc;
+          
+          // cargar reviews
+          this.loadReviews();
+
+          // definir msg rating
+          const rating = this.location.rating ?? 0;
+      
+          if (rating === 0) {
+            this.ratingMessage = 'Sin valoración';
+          } else if (rating < 2.5) {
+            this.ratingMessage = 'Malo';
+          } else if (rating < 4) {
+            this.ratingMessage = 'Regular';
+          } else {
+            this.ratingMessage = 'Excelente';
+          }
+
+          // definir url maps
+          const rawUrl = this.getGoogleMapsEmbed(this.location?.coordinates[0], this.location?.coordinates[1]);
+          this.googleMapsEmbedUrl = this.sanitizer.bypassSecurityTrustResourceUrl(rawUrl);
+
         } else {
-          // Parallax scroll hacia arriba
-          const maxTranslate = 80;
-          const translateY = Math.min(maxTranslate, scrollTop * 0.4);
-          image.style.transform = `translateY(${translateY}px)`;
+          this.errorMsg = 'No se ha encontrado la ubicación.';
         }
+        this.isLoading = false;
+      },
+      error: (err) => {
+        // console.error('Error al cargar location:', err);
+        this.errorMsg = 'No se ha encontrado la ubicación.';
+        this.isLoading = false;
+        this.handleLocationNotFound();
       }
     });
-  }
-
-  async openImageModal() {
-    const modal = await this.modalCtrl.create({
-      component: ImageVisualizerComponent,
-      componentProps: { imageUrl: this.location.imageUrl },
-      cssClass: 'simple-image-modal',
-      showBackdrop: true,
-      backdropDismiss: false,
-    });
-    await modal.present();
-  }
-
-  setRating() {
-    const rating = this.location.rating ?? 0;
-    this.ratingDecimal = rating.toFixed(1);
-
-    if (rating === 0) {
-      this.ratingClass = 'rating-zero';
-      this.ratingMessage = 'Sin valoración';
-    } else if (rating < 2.5) {
-      this.ratingClass = 'rating-bad';
-      this.ratingMessage = 'Malo';
-    } else if (rating < 4) {
-      this.ratingClass = 'rating-average';
-      this.ratingMessage = 'Regular';
-    } else {
-      this.ratingClass = 'rating-good';
-      this.ratingMessage = 'Excelente';
-    }
   }
 
   getGoogleMapsEmbed(lat: number, lng: number): string {
@@ -164,41 +149,224 @@ export class LocationDetailsComponent implements OnInit, AfterViewInit {
   }
 
   loadReviews() {
-    if (this.reviewsLoading || this.reviewsFinished) {
-      console.log('[loadReviews] Skip: loading=', this.reviewsLoading, ' finished=', this.reviewsFinished);
-      return;
-    }
-  
-    console.log(this.location.id);
-    console.log('[loadReviews] Fetching page', this.page);
+    // console.log('Cargando reseñas para la location:', this.location?.id);
+
+    if (!this.location || this.reviewsLoading || this.reviewsFinished) return;
+
+    // console.log('Cargando reseñas para la location:', this.location.id);
+    // console.log(`Página: ${this.page}, Límite: ${this.reviewsLimit}`);
+
     this.reviewsLoading = true;
-  
-    this.reviewService.getReviews(this.location.id, this.page, this.limit).subscribe({
+    this.reviewService.getReviews(this.location.id, this.page, this.reviewsLimit).subscribe({
       next: paginated => {
-        console.log('[loadReviews] Received reviews:', paginated.results.length);
         this.reviews.push(...paginated.results);
         this.page++;
         this.reviewsLoading = false;
-  
-        if (paginated.results.length < this.limit) {
-          console.log('[loadReviews] No more reviews to load. Marking as finished.');
+        if (paginated.results.length < this.reviewsLimit) {
           this.reviewsFinished = true;
         }
       },
-      error: err => {
-        console.error('[loadReviews] Error:', err);
+      error: () => {
         this.reviewsLoading = false;
       }
     });
+  }
+
+  resetForm() {
+    this.resetReviewForm = true;
+    // False para permitir futuros reinicios
+    setTimeout(() => this.resetReviewForm = false, 0);
+  }
+
+  onReviewSubmit(data: {
+    author: string;
+    comment: string;
+    rating: number;
+    coordinates: [number, number];
+  }) {
+    const review = {
+      author: data.author,
+      reviewText: data.comment,
+      rating: data.rating,
+      coordinates: data.coordinates,
+    };
+
+    // console.log('Comentario recibido:', review);
+
+    // Llamar al servicio para insertar la reseña
+    this.reviewService.insertReview(this.locationId!, review).subscribe(success => {
+      if (success) {
+        this.presentToast('Review insertada correctamente', 'success');
+        // Limpiar formulario
+        this.resetForm();
+
+        // Recargar la location para actualizar la vista
+        this.reviewsFinished = false;
+        this.loadLocation(this.locationId!); 
+
+        // Recargar reseñas para ver el nuevo comentario
+        const currentLength = this.reviews.length;
+        this.reviews = [];
+        this.page = 0;
+        this.reviewsLimit = currentLength + 1;
+        this.loadReviews();
+      } else {
+        this.presentToast('Error al insertar la review', 'danger');
+      }
+    });
+  }
+
+  loadMore(event: InfiniteScrollCustomEvent) {
+    // console.log('Loading reviews...');
+    this.loadReviews();
+    setTimeout(() => {
+      event.target.complete();
+    }, 2500);
+  }
+
+  async presentToast(message: string, color: 'success' | 'danger') {
+    const toast = await this.toastController.create({
+      message,
+      duration: 2000,
+      position: 'bottom',
+      color
+    });
+    await toast.present();
+  }
+
+  // Método para mostrar alerta de confirmación antes de eliminar una reseña
+  async alertDeleteReview(reviewId: string) {
+    const alert = await this.alertController.create({
+      header: '¿Eliminar review?',
+      message: '¿Seguro que quieres eliminar esta review?',
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+        },
+        {
+          text: 'Eliminar',
+          role: 'destructive',
+          handler: () => {
+            this.deleteReview(reviewId);
+          },
+        },
+      ],
+    });
   
-    console.log(this.reviews);
+    await alert.present();
+  }
+
+  // Método para eliminar un review
+  deleteReview(id: string) {
+    if (!this.locationId) {
+      console.error('No hay locationId definido');
+      this.presentToast('Error: Location no definida', 'danger');
+      return;
+    }
+  
+    this.reviewService.deleteReview(this.locationId, id).subscribe(success => {
+      if (success) {
+        this.presentToast('Review eliminada correctamente', 'success');
+  
+        // Recargar location para actualizar rating, número de reviews, etc.
+        this.reviewsFinished = false;
+        this.loadLocation(this.locationId!);
+  
+        // Recargar reseñas para refrescar la lista tras eliminación
+        const currentLength = this.reviews.length;
+        this.reviews = [];
+        this.page = 0;
+        this.reviewsLimit = currentLength > 0 ? currentLength - 1 : 10; // Ajusta límite si quieres
+        this.loadReviews();
+      } else {
+        this.presentToast('Error al eliminar la review', 'danger');
+      }
+    });
+  } 
+
+  // Opciones
+  async presentActionSheet() {
+    const actionSheet = await this.actionSheetController.create({
+      header: 'Opciones',
+      buttons: [
+        {
+          text: 'Editar',
+          handler: () => this.onEdit()
+        },
+        {
+          text: 'Eliminar',
+          role: 'destructive',
+          handler: () => this.alertDeleteLocation()
+        },
+        {
+          text: 'Cancelar',
+          role: 'cancel'
+        }
+      ]
+    });
+  
+    await actionSheet.present();
+  }
+
+  // Eliminar location
+  async alertDeleteLocation() {
+    const alert = await this.alertController.create({
+      header: '¿Eliminar ubicación?',
+      message: '¿Seguro que quieres eliminar esta ubicación?',
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+        },
+        {
+          text: 'Eliminar',
+          role: 'destructive',
+          handler: () => {
+            this.deleteLocation();
+          },
+        },
+      ],
+    });
+  
+    await alert.present();
   }
   
-  loadMoreReviews(event: any) {
+  deleteLocation() {
+    if (!this.locationId) {
+      this.presentToast('Error: ID de ubicación no definido', 'danger');
+      return;
+    }
+  
+    this.locationService.deleteLocation(this.locationId).subscribe(success => {
+      if (success) {
+        this.presentToast('Ubicación eliminada correctamente', 'success');
+  
+        // Espera unos segundos antes de redirigir
+        setTimeout(() => {
+          // Redirección con historial limpio (no se puede volver atrás)
+          this.navController.navigateRoot('/locations');
+        }, 2000);
+      } else {
+        this.presentToast('Error al eliminar la ubicación', 'danger');
+      }
+    });
+  }
+
+  // Si no se encuentra la location
+  handleLocationNotFound() {
+    this.isLoading = false;
+    this.presentToast('Ubicación no encontrada', 'danger');
+  
     setTimeout(() => {
-      this.loadReviews();
-      event.target.complete();
-    }, 1500);  // pequeño delay para que no vaya demasiado rápido
+      this.navController.navigateRoot('/locations');
+    }, 2000);
+  }
+  
+  onEdit() {
+    console.log('Editar clicked');
+    // Aquí la lógica para editar
   }
 
 }
+

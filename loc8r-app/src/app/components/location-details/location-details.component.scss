@@ -1,78 +1,95 @@
-.location-details-content {
-  background: var(--ion-card-background);
-
-  .header-image-wrapper {
-    position: relative;
-    width: 100%;
-    height: 240px;
-    overflow: hidden;
-    z-index: 1;
-  }
-
-  .header-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.2s ease-out;
-    will-change: transform;
-  }
-
-  .content-wrapper {
-    position: relative;
-    z-index: 2;
-    background: var(--ion-card-background);
-    border-top-left-radius: 16px;
-    border-top-right-radius: 16px;
-    margin-top: -30px;
-    padding: 16px;
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-  }
-}
-
-.image-container {
-  position: relative;
-
-  .image-viewer-button {
-    position: absolute;
-    bottom: 12px;
-    right: 12px;
-    background: rgba(0, 0, 0, 0.6);
-    color: white;
-    border-radius: 50%;
-    z-index: 10;
-  }
-}
-
+// Estilos de la imagen
 
 .main-image-container {
-  height: 220px;
-  overflow: hidden;
   position: relative;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  overflow: hidden;
+  max-height: 300px; // evita que se haga enorme en pantallas grandes
+
+    @media (max-width: 650px) {
+      max-height: none; // en móviles, que el aspect ratio mande
+    }
+  
+    ion-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      top: 0;
+      left: 0;
+      transition: transform 0.2s ease-out;
+    }
+  
+    // Degradado difuminado abajo
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 80px;
+      background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        var(--ion-card-background) 100%
+      );
+      z-index: 2;
+      pointer-events: none;
+    }
+  
+    .back-button {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      z-index: 3;
+      transition: transform 0.2s ease;
+  
+      &:hover {
+        transform: scale(1.1);
+      }
+    }
+  
+    .image-viewer-button {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      z-index: 3;
+      transition: transform 0.2s ease;
+  
+      &:hover {
+        transform: scale(1.1);
+      }
+    }
+  }
+
+// Estilos del contenido
+
+.location-details-content {
+  background: var(--ion-card-background);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  margin-top: -30px;
+  padding: 16px;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.main-image-container ion-img {
-  width: 100%;
-  height: 120%;
-  object-fit: cover;
-  position: absolute;
-  top: 0;
-  left: 0;
-  transition: transform 0.2s ease-out;
+.content-wrapper {
+  position: relative;
+  z-index: 2;
 }
 
 .location-summary {
-  padding: 1rem;
-  // border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 1rem;
 }
 
 .location-name {
-  font-size: 1.5rem;
-  font-weight: bold;
+  font-size: 1.8rem;
+  font-weight: 700;
   margin-bottom: 0.25rem;
 }
 
 .location-address {
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: #666;
 }
 
@@ -83,9 +100,9 @@
 }
 
 .rating-score {
-  font-size: 2rem;
-  font-weight: bold;
-  padding: 0.5rem 1rem;
+  font-size: 2.2rem;
+  font-weight: 700;
+  padding: 0.5rem 1.2rem;
   border-radius: 10px;
   margin-right: 1rem;
   color: #fff;
@@ -118,12 +135,12 @@
 }
 
 .map-section {
-  padding: 1rem;
-  margin-top: 1rem;
+  padding-top: 1rem;
 }
 
-.map-section h2 {
-  margin-bottom: 0.75rem;
+h2 {
+  margin-bottom: 1rem;
+  font-weight: 600;
 }
 
 .map-container {
@@ -138,23 +155,27 @@
   width: 100%;
   height: 100%;
   border: 0;
+  border-radius: 20px;
 }
 
-.more-info-section, .reviews-section {
-  padding: 1rem;
-  margin-top: 1rem;
+.more-info-section {
+  padding-top: 1rem;
 }
 
-.more-info-section h2, .reviews-section h2 {
+.more-info-section h2 {
   margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.date-text {
+  display: flex;
+  align-items: center; /* centra verticalmente icono y texto */
+  gap: 0.5rem; /* opcional, para espacio entre icono y texto */
 }
 
 .spinner-container {
+  height: 70vh;
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
-  margin-top: 2rem;
-  color: var(--ion-color-medium);
+  align-items: center;
 }
-
