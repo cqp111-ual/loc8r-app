@@ -2,8 +2,50 @@
 
 <ion-content class="ion-padding">
   <div class="content-container">
-    <p>
-      profile works!
-    </p>
+    <h1>Mi perfil</h1>
+    <br />
+
+    <ng-container *ngIf="isLoggedIn; else notLoggedIn">
+      <br />
+      <ion-item 
+        class="ion-padding-vertical"
+        lines="none" 
+        detail="false" 
+        class="user-info-item"
+      >
+        <ion-label>
+          <h2>{{ userEmail }}</h2>
+          <p>Correo electrónico</p>
+        </ion-label>
+        <ion-icon size=large name="person-circle-outline" slot="start" class="user-icon"></ion-icon>
+      </ion-item>
+
+      <br />
+      <ion-item 
+        button 
+        detail 
+        class="ion-padding-vertical"
+        lines="full" 
+        (click)="logout()"
+      >
+        <ion-icon slot="start" name="log-out-outline"></ion-icon>
+        <ion-label>Cerrar sesión</ion-label>
+      </ion-item>
+    </ng-container>
+
+    <ng-template #notLoggedIn>
+      <p class="ion-padding-vertical">Debes iniciar sesión para ver tu perfil.</p>
+
+      <ion-item 
+      button 
+      detail
+      class="ion-padding-vertical" 
+      lines="full" 
+      (click)="goToHome()"
+      >
+        <ion-icon slot="start" name="log-in-outline"></ion-icon>
+        <ion-label>Iniciar sesión</ion-label>
+      </ion-item>
+    </ng-template>
   </div>
 </ion-content>

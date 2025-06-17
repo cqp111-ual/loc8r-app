@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HeaderComponent } from '../header/header.component';
 import { FsqSearchCardComponent } from '../fsq-search-card/fsq-search-card.component';
 import { CommonModule } from '@angular/common';
@@ -8,6 +8,8 @@ import { location } from 'ionicons/icons';
 import { ImageVisualizerComponent } from '../image-visualizer/image-visualizer.component';
 import { RatingBadgeComponent } from '../rating-badge/rating-badge.component';
 import { LocationService } from 'src/app/services/location.service';
+import { AuthService } from 'src/app/services/auth.service';
+import { AuthProtectedPageComponent } from '../auth-protected-page/auth-protected-page.component';
 import { 
   IonContent, 
   IonHeader,
@@ -30,12 +32,14 @@ import {
   IonSpinner,
   ToastController
 } from '@ionic/angular/standalone';
+import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-fsq-import',
   standalone: true,
   templateUrl: './fsq-import.component.html',
   styleUrls: ['./fsq-import.component.scss'],
   imports: [ 
+    AuthProtectedPageComponent,
     HeaderComponent,
     ImageVisualizerComponent,
     FsqSearchCardComponent,
@@ -61,8 +65,12 @@ import {
     IonSpinner
   ]
 })
-export class FsqImportComponent  implements OnInit {
+export class FsqImportComponent  implements OnInit, OnDestroy {
 
+  // auth
+  isLoggedIn: boolean = false;
+  private subscription?: Subscription;
+  
   selectedIds: string[] = [];
   maxSelectable = 10;
   isLoading = false;
@@ -73,12 +81,21 @@ export class FsqImportComponent  implements OnInit {
   constructor(
     private alertController: AlertController,
     private locationService: LocationService,
-    private toastController: ToastController
+    private toastController: ToastController,
+    public authService: AuthService,
   ) {
     addIcons({ location });
   }
 
   ngOnInit() {
+    console.log(this.isLoggedIn)
+    this.subscription = this.authService.userObservable$.subscribe(user => {
+      this.isLoggedIn = !!user;
+    });
+  }
+
+  ngOnDestroy() {
+    this.subscription?.unsubscribe();
   }
 
   onSearch(filters: any) {

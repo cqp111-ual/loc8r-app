@@ -5,21 +5,18 @@
       <ion-col size="12" size-md="6" class="right order-1 order-md-2">
         <img src="assets/images/logo.png" alt="Logo" class="logo" />
         <div class="auth-box ion-margin">
-          <h1 class="title">¡Bienvenido a Nuestra App!</h1>
+          <h1 class="title">¡Bienvenido a Loc8r!</h1>
 
-          <ion-button expand="block" fill="solid" class="btn-login" color="primary">
+          <ion-button  [routerLink]="['/home/login']" expand="block" fill="solid" class="btn-login" color="primary">
             Iniciar sesión
           </ion-button>
 
-          <div class="separator">
+          <div class="separator ion-padding-vertical">
             <span>¿No tienes una cuenta?</span>
-            <ion-button size="small" fill="clear" class="btn-register" color="success">
-              Registrarse
-            </ion-button>
           </div>
 
-          <ion-button expand="block" fill="outline" class="btn-guest">Continuar como invitado</ion-button>
-          <ion-button expand="block" fill="outline" class="btn-explore">Explorar</ion-button>
+          <ion-button [routerLink]="['/home/register']" expand="block" color="tertiary" >Registrarse</ion-button>
+          <ion-button [routerLink]="['/locations']" expand="block" fill="outline" class="btn-explore">Continuar como invitado</ion-button>
         </div>
       </ion-col>
 
@@ -31,9 +28,9 @@
             <ion-text>
               <h2>Prepárate para:</h2>
               <ul>
-                <li>Ofertas exclusivas para miembros</li>
-                <li>Sigue tus búsquedas desde cualquier dispositivo</li>
-                <li>Alertas personalizadas para ahorrar</li>
+                <li>Descubrir ubicaciones increíbles cerca de ti.</li>
+                <li>Compartir tu opinión sobre sitios en los que hayas estado.</li>
+                <li>Añadir y editar nuevos puntos de interés.</li>
               </ul>
             </ion-text>
           </div>

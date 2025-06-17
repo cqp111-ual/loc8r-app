@@ -1,4 +1,4 @@
-import { Component, ViewChild, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgForm, FormsModule, NgModel } from '@angular/forms';
 import { HeaderComponent } from '../header/header.component';
@@ -27,7 +27,9 @@ import {
   IonFabButton
 } from '@ionic/angular/standalone';
 import { CoordPickerComponent } from '../coord-picker/coord-picker.component';
-
+import { Subscription } from 'rxjs';
+import { AuthService } from '../../services/auth.service';
+import { AuthProtectedPageComponent } from '../auth-protected-page/auth-protected-page.component';
 // Modelo para representar un campo de formulario
 interface FormField<T = any> {
   value: T;
@@ -42,6 +44,7 @@ interface FormField<T = any> {
   templateUrl: './location-form.component.html',
   styleUrls: ['./location-form.component.scss'],
   imports: [
+    AuthProtectedPageComponent,
     HeaderComponent,
     CommonModule,
     FormsModule,
@@ -64,9 +67,13 @@ interface FormField<T = any> {
     IonFabButton
   ]
 })
-export class LocationFormComponent {
+export class LocationFormComponent implements OnInit, OnDestroy {
   
   @ViewChild('locationForm') locationForm!: NgForm;
+
+  // auth
+  isLoggedIn: boolean = false;
+  private subscription?: Subscription;
 
   // Los componentes de input no se ven bien en iOS
   isIos = false;
@@ -101,12 +108,24 @@ export class LocationFormComponent {
   public cameraPhoto?: SafeResourceUrl; 
 
   constructor(
+    private authService: AuthService,
     private locationService: LocationService,
     private sanitizer: DomSanitizer,
     private platform: Platform
   ) {
     this.isIos = this.platform.is('ios');
     addIcons({ removeCircle, closeCircle, checkmarkCircle, alertCircle, alert, close, camera });
+  }
+
+  ngOnInit() {
+    console.log(this.isLoggedIn)
+    this.subscription = this.authService.userObservable$.subscribe(user => {
+      this.isLoggedIn = !!user;
+    });
+  }
+
+  ngOnDestroy() {
+    this.subscription?.unsubscribe();
   }
 
   getFormFieldStatusDebug(

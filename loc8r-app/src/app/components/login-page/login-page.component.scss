@@ -1,0 +1,53 @@
+
+ion-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: start;
+    position: relative;
+  }
+  
+  .back-button {
+    --color: var(--ion-color-medium);
+  }
+  
+  .login-wrapper {
+    width: 100%;
+    max-width: 400px;
+    margin: 10% auto 0 auto;
+    // margin-top: 60px; // deja espacio para el botón atrás
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    // height: 100%;
+    // margin: auto auto;
+    // min-height: 90vh;
+  }
+  
+  form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    // border-radius: 16px;
+    // box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+  
+  ion-input {
+    --border-radius: 12px;
+    --highlight-color-valid: var(--ion-color-primary);
+
+  }
+  
+  ion-button {
+    --border-radius: 12px;
+  }
+  
+  .register-button {
+    margin-top: 8px;
+    font-size: 14px;
+    text-decoration: underline;
+    color: var(--ion-color-primary);
+  }
+  

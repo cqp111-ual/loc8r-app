@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import { 
   IonContent,
   IonButton,
@@ -20,12 +21,13 @@ import {
     IonCol,
     IonGrid,
     IonText,
-    IonCard
+    IonCard,
+    RouterModule
   ]
 })
 export class LandingPageComponent  implements OnInit {
 
-  constructor() { }
+  constructor(  ) { }
 
   ngOnInit() {}
 

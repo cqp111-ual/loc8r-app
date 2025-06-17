@@ -1,0 +1,76 @@
+<app-header [title]="headerTitle"></app-header>
+
+<ion-content class="ion-padding">
+
+  <div class="content-container">
+    <ion-button shape="round" size="large" class="back-button" fill="clear" (click)="goBack()">
+      <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
+    </ion-button>
+
+    <div class="login-wrapper">
+
+      <form [formGroup]="loginForm" (ngSubmit)="submit()"> 
+
+        <div class="form-item ion-padding-vertical">
+          <ion-input
+            class="form-input"
+            fill="outline"
+            label="Email"
+            label-placement="floating"
+            placeholder="Introduce el correo electrónico"
+            formControlName="email"
+            type="email"
+            required
+          ></ion-input>
+          <ion-note color="danger" *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+            Ingresa un correo válido.
+          </ion-note>
+        </div>
+
+        <div class="form-item ion-padding-vertical">
+          <ion-input
+            class="form-input"
+            fill="outline"
+            label="Contraseña"
+            label-placement="floating"
+            placeholder="Introduce la contraseña"
+            formControlName="password"
+            type="password"
+            required
+          >
+            <ion-input-password-toggle color="medium" slot="end"></ion-input-password-toggle>
+          </ion-input>
+          <ion-text color="danger" *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+            La contraseña debe tener al menos 6 caracteres.
+          </ion-text> 
+        </div>
+
+        <div *ngIf="!isLogin" class="form-item ion-padding-vertical">
+          <ion-input
+            class="form-input"
+            fill="outline"
+            label="Confirmar contraseña"
+            label-placement="floating"
+            placeholder="Vuelve a escribir la contraseña"
+            formControlName="confirmPassword"
+            type="password"
+            required
+          >
+            <ion-input-password-toggle color="medium" slot="end"></ion-input-password-toggle>
+          </ion-input>
+          <ion-text color="danger" *ngIf="loginForm.hasError('passwordMismatch') && loginForm.get('confirmPassword')?.touched">
+            Las contraseñas introducidas no coinciden.
+          </ion-text>
+        </div>      
+
+        <ion-button expand="block" type="submit" [disabled]="loginForm.invalid">
+          {{ isLogin ? 'Iniciar sesión' : 'Registrarse' }}
+        </ion-button> 
+
+        <ion-button class="register-button" fill="clear" [routerLink]="['/home/register']" *ngIf="isLogin">
+          ¿No tienes cuenta? Regístrate
+        </ion-button>
+      </form>
+    </div>
+  </div>
+</ion-content>
