@@ -4,11 +4,10 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormGroup, FormControl, Validators, AbstractControl } from '@angular/forms';
 import { IonicModule, ToastController, LoadingController } from '@ionic/angular';
-import { addIcons } from 'ionicons';
-import { arrowBackOutline } from 'ionicons/icons';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { HeaderComponent } from '../header/header.component';
+import { CustomBackButtonComponent } from '../custom-back-button/custom-back-button.component';
 @Component({
   selector: 'app-login-page',
   templateUrl: './login-page.component.html',
@@ -19,7 +18,8 @@ import { HeaderComponent } from '../header/header.component';
     FormsModule, 
     ReactiveFormsModule,
     HeaderComponent,
-    RouterModule
+    RouterModule,
+    CustomBackButtonComponent
   ]
 })
 export class LoginPageComponent implements ViewWillLeave {
@@ -35,9 +35,6 @@ export class LoginPageComponent implements ViewWillLeave {
     private navController: NavController,
     private router: Router
   ) { 
-    addIcons({
-      arrowBackOutline
-    });
 
     this.isLogin = this.router.url.includes('/login');
 
@@ -67,10 +64,6 @@ export class LoginPageComponent implements ViewWillLeave {
 
   ionViewWillLeave(): void {
     this.loginForm.reset();
-  }
-
-  goBack() {
-    this.navController.navigateBack('/home');
   }
 
   passwordsMatchValidator(form: FormGroup) {

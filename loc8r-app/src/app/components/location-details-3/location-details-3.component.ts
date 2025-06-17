@@ -7,6 +7,7 @@ import { ReviewService } from '../../services/review.service';
 import { Review } from '../../interfaces/location.interface'; // ajusta la ruta según tu proyecto
 import { InfiniteScrollCustomEvent } from '@ionic/core';
 import { ToastController, AlertController } from '@ionic/angular';
+import { CustomBackButtonComponent } from '../custom-back-button/custom-back-button.component';
 import {
   IonContent,
   IonInfiniteScroll,
@@ -27,6 +28,7 @@ import {
   styleUrls: ['./location-details-3.component.scss'],
   imports: [
     CommonModule,
+    CustomBackButtonComponent,
     IonContent,
     IonInfiniteScroll,
     IonInfiniteScrollContent,

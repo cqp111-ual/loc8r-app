@@ -1,0 +1,11 @@
+<ion-button
+  shape="round"
+  [size]="size"
+  [fill]="styleType === 'transparent' ? 'clear' : 'solid'"
+  [color]="styleType === 'transparent' ? 'medium' : 'light'"
+  class="back-button"
+  (click)="goBack()"
+  aria-label="Volver"
+>
+  <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
+</ion-button>
