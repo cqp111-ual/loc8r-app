@@ -12,7 +12,9 @@
 
   [slot="content"] {
     padding: 12px;
-    background-color: #fdfdfd;
+    // background-color: #fdfdfd;
+    background: var(--ion-color-light);
+
     border-top: 1px solid #ddd;
   }
 }
