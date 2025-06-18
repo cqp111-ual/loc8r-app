@@ -10,19 +10,36 @@
   </ion-card-header>
 
   <ion-card-content>
-    <div class="rating-container">
-      <div class="rating-box" [ngClass]="ratingClass">
-        {{ ratingDecimal }}
+    <!-- Rating + Info -->
+    <div class="rating-info-row">
+      <app-rating-badge
+        [rating]="location.rating"
+        [size]="'small'"
+        class="rating-badge"
+      ></app-rating-badge>
+
+      <div class="rating-details">
+        <div class="rating-message">
+          <strong>{{ ratingMessage }}</strong>
+        </div>
+        <div class="reviews-count">
+          {{ location.numReviews }} reseñas
+        </div>
       </div>
-      <div class="rating-message"><strong>{{ ratingMessage }}</strong></div>
-      <div class="reviews-count">{{ reviewsCount }} reseñas</div>
     </div>
 
+    <!-- Coordenadas justo debajo -->
     <div class="location-coordinates">
-      <ion-icon name="location-outline"></ion-icon>
+      <ion-icon name="location"></ion-icon>
       <a [href]="geolocationUrl" target="_blank" rel="noopener noreferrer">
-        {{ location.coordinates[0] }}, {{ location.coordinates[1] }}
+        [ {{ location.coordinates[0] }}, {{ location.coordinates[1] }} ]
       </a>
+    </div>
+
+    <!-- Fecha a la derecha -->
+    <div class="created-on">
+      <ion-icon name="calendar-outline"></ion-icon>
+      <span>Creado el {{ location.createdOn | date: 'mediumDate' }}</span>
     </div>
   </ion-card-content>
 </ion-card>
