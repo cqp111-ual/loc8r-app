@@ -4,19 +4,12 @@ import { CommonModule } from '@angular/common';
 import { HeaderComponent } from '../header/header.component';
 import {
   ViewWillEnter,
-  IonList,
   IonButton,
-  IonHeader,
-  IonToolbar,
   IonCardContent,
   IonCardTitle,
   IonCardHeader,
-  IonTitle,
   IonCard,
   IonContent,
-  IonSearchbar,
-  IonSelectOption,
-  IonSelect,
   IonLabel,
   IonItem,
   IonGrid,
@@ -38,20 +31,13 @@ import { LocationSearchFiltersComponent } from '../location-search-filters/locat
   styleUrls: ['./location-search.component.scss'],
   imports: [
     HeaderComponent,
-    IonList,
     CommonModule,
     IonButton,
-    IonHeader,
-    IonToolbar,
     IonCardContent,
     IonCardTitle,
     IonCardHeader,
-    IonTitle,
     IonCard,
     IonContent,
-    IonSearchbar,
-    IonSelectOption,
-    IonSelect,
     IonLabel,
     IonItem,
     LocationCardComponent,
@@ -62,7 +48,7 @@ import { LocationSearchFiltersComponent } from '../location-search-filters/locat
     LocationSearchFiltersComponent,
     IonAccordionGroup,
     IonAccordion,
-]
+  ]
 })
 export class LocationSearchComponent implements OnInit, ViewWillEnter{
 

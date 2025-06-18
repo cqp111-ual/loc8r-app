@@ -5,21 +5,15 @@ import { CommonModule } from '@angular/common';
 import { LocationFSQ } from '../../interfaces/location.interface';
 import { addIcons } from 'ionicons';
 import { location } from 'ionicons/icons';
-import { ImageVisualizerComponent } from '../image-visualizer/image-visualizer.component';
 import { RatingBadgeComponent } from '../rating-badge/rating-badge.component';
 import { LocationService } from 'src/app/services/location.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { AuthProtectedPageComponent } from '../auth-protected-page/auth-protected-page.component';
 import { 
   IonContent, 
-  IonHeader,
-  IonText,
   IonItem,
   IonLabel,
   IonList, 
-  IonCard,
-  IonTitle,
-  IonToolbar,
   IonAccordion,
   IonAccordionGroup,
   IonCheckbox,
@@ -28,7 +22,6 @@ import {
   IonButton,
   IonAvatar,
   IonIcon,
-  IonBadge,
   IonSpinner,
   ToastController
 } from '@ionic/angular/standalone';
@@ -41,19 +34,13 @@ import { Subscription } from 'rxjs';
   imports: [ 
     AuthProtectedPageComponent,
     HeaderComponent,
-    ImageVisualizerComponent,
     FsqSearchCardComponent,
     RatingBadgeComponent,
     CommonModule,
     IonContent,
-    IonHeader,
-    IonText,
     IonItem,
     IonLabel,
     IonList,
-    IonCard,
-    IonTitle,
-    IonToolbar,
     IonAccordion,
     IonAccordionGroup,
     IonCheckbox,
@@ -61,7 +48,6 @@ import { Subscription } from 'rxjs';
     IonButton,
     IonAvatar,
     IonIcon,
-    IonBadge,
     IonSpinner
   ]
 })

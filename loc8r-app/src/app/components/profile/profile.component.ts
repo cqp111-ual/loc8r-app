@@ -7,7 +7,6 @@ import { addIcons } from 'ionicons';
 import { logInOutline, logOutOutline } from 'ionicons/icons';
 import { 
   IonContent,
-  IonButton,
   IonItem,
   IonLabel,
   IonIcon,
@@ -22,7 +21,6 @@ import { Subscription } from 'rxjs';
     HeaderComponent,
     IonContent,
     CommonModule,
-    IonButton,
     IonItem,
     IonLabel,
     IonIcon,

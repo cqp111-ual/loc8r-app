@@ -5,24 +5,14 @@ import { CoordPickerComponent } from '../coord-picker/coord-picker.component';
 import { addIcons } from 'ionicons';
 import { searchOutline } from 'ionicons/icons';
 import {
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
-  IonCardContent,
-  IonSearchbar,
   IonRange,
   IonSelect,
   IonSelectOption,
   IonButton,
-  IonChip,
-  IonLabel,
   IonIcon,
   IonItem,
   IonInput,
   IonCheckbox,
-  IonRow,
-  IonCol,
-  IonList,
 } from '@ionic/angular/standalone';
 @Component({
   selector: 'app-fsq-search-card',
@@ -33,24 +23,14 @@ import {
     CommonModule,
     FormsModule,
     CoordPickerComponent,
-    IonCard,
-    IonCardHeader,
-    IonCardTitle,
-    IonCardContent,
-    IonSearchbar,
     IonRange,
     IonSelect,
     IonSelectOption,
     IonButton,
-    IonChip,
-    IonLabel,
     IonIcon,
     IonItem,
     IonInput,
     IonCheckbox,
-    IonRow,
-    IonCol,
-    IonList
   ]
 })
 export class FsqSearchCardComponent {

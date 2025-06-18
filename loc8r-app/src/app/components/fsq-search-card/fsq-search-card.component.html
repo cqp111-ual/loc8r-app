@@ -21,7 +21,7 @@
         placeholder="¿Qué estás buscando?"
         name="query"
         type="text"
-        [value]="filters.query.value ?? ''"
+        [value]="filters.query.value"
         (ionChange)="filters.query.value = $event.detail.value ?? ''"
         [disabled]="!filters.query.enabled"
       >

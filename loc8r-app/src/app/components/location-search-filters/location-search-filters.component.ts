@@ -4,17 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
 import { searchOutline } from 'ionicons/icons';
 import {
-  IonSearchbar,
   IonSelect,
   IonSelectOption,
   IonButton,
   IonItem,
-  IonLabel,
   IonInput,
-  IonCheckbox,
-  IonRange,
-  IonRow,
-  IonCol,
   IonIcon
 } from '@ionic/angular/standalone';
 
@@ -26,17 +20,11 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    IonSearchbar,
     IonSelect,
     IonSelectOption,
     IonButton,
     IonItem,
-    IonLabel,
     IonInput,
-    IonCheckbox,
-    IonRange,
-    IonRow,
-    IonCol,
     IonIcon
   ]
 })
