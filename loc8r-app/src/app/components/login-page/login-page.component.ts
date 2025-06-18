@@ -60,7 +60,7 @@ export class LoginPageComponent implements ViewWillLeave {
       validators: !this.isLogin ? matchPasswordsValidator : null
     });
 
-    console.log(this.isLogin)
+    // console.log(this.isLogin)
   }
 
   ionViewWillLeave(): void {

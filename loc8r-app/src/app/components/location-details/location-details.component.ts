@@ -19,7 +19,7 @@ import { addIcons } from 'ionicons';
 import { scanCircleOutline, scanOutline, calendarOutline, pencilOutline, trashOutline, ellipsisHorizontalOutline } from 'ionicons/icons';
 import { RatingBadgeComponent } from '../rating-badge/rating-badge.component';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { NavController, ActionSheetController } from '@ionic/angular/standalone';
+import { ViewWillEnter, NavController, ActionSheetController } from '@ionic/angular/standalone';
 import { environment } from 'src/environments/environment';
 @Component({
   selector: 'app-location-details',
@@ -37,7 +37,7 @@ import { environment } from 'src/environments/environment';
     RatingBadgeComponent
   ]
 })
-export class LocationDetailsComponent implements OnInit, OnDestroy {
+export class LocationDetailsComponent implements OnInit, OnDestroy, ViewWillEnter {
 
   // auth
   isLoggedIn: boolean = true;
@@ -93,6 +93,12 @@ export class LocationDetailsComponent implements OnInit, OnDestroy {
     }
 
     this.loadLocation(this.locationId);
+  }
+
+  ionViewWillEnter(): void {
+    if (this.locationId) {
+      this.loadLocation(this.locationId);
+    }
   }
 
   ngOnDestroy() {
@@ -364,8 +370,7 @@ export class LocationDetailsComponent implements OnInit, OnDestroy {
   }
   
   onEdit() {
-    console.log('Editar clicked');
-    // Aquí la lógica para editar
+    this.navController.navigateForward(`/locations/${this.locationId}/edit`);
   }
 
 }

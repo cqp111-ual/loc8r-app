@@ -2,6 +2,21 @@ ion-input {
   --highlight-color-valid: var(--ion-color-primary);
 }
 
+/* Cuando no ha cambiado (unchanged) */
+ion-input.unchanged {
+  --highlight-color-valid: var(--ion-color-medium);
+  --highlight-color-focused: var(--ion-color-medium);
+  --background: var(--ion-color-light);
+  opacity: 0.6;
+}
+
+ion-textarea.unchanged {
+  --highlight-color-valid: var(--ion-color-medium);
+  --highlight-color-focused: var(--ion-color-medium);
+  --background: var(--ion-color-light);
+  opacity: 0.6;
+}
+
 ion-select {
   --highlight-color-valid: var(--ion-color-primary);
 }
@@ -20,4 +35,11 @@ ion-textarea {
 
 .status-icon.unchanged {
   color: var(--ion-color-medium);
+}
+
+.spinner-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80vh;
 }

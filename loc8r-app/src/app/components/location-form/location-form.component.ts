@@ -1,14 +1,40 @@
 import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NgForm, FormsModule, NgModel } from '@angular/forms';
 import { HeaderComponent } from '../header/header.component';
 import { LocationService } from '../../services/location.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser'; 
 import { Camera, CameraResultType } from '@capacitor/camera'; 
+import { Subscription } from 'rxjs';
+import { AuthService } from '../../services/auth.service';
+import { AuthProtectedPageComponent } from '../auth-protected-page/auth-protected-page.component';
+import { CustomBackButtonComponent } from '../custom-back-button/custom-back-button.component';
 import { addIcons } from 'ionicons';
-import { removeCircle, closeCircle, checkmarkCircle, alertCircle, alert, close, camera} from 'ionicons/icons';
+import { 
+  ReactiveFormsModule, 
+  FormsModule, 
+  FormBuilder, 
+  FormGroup, 
+  Validators, 
+  FormControl, 
+  ValidatorFn, 
+  AbstractControl, 
+  ValidationErrors
+} from '@angular/forms';
+import { 
+  removeCircle, 
+  closeCircle, 
+  checkmarkCircle, 
+  alertCircle, 
+  alert, 
+  close, 
+  camera
+} from 'ionicons/icons';
 import {
-  Platform,
+  ViewWillEnter,
+  NavController,
+  ToastController,
+  LoadingController,
+  // ui components
   IonContent,
   IonButton,
   IonLabel,
@@ -23,21 +49,42 @@ import {
   IonSelect,
   IonSelectOption,
   IonCheckbox,
-  IonFab,
-  IonFabButton
+  IonSpinner,
+  IonCard,
+  IonCardContent,
+  IonCardTitle,
+  IonCardHeader
 } from '@ionic/angular/standalone';
 import { CoordPickerComponent } from '../coord-picker/coord-picker.component';
-import { Subscription } from 'rxjs';
-import { AuthService } from '../../services/auth.service';
-import { AuthProtectedPageComponent } from '../auth-protected-page/auth-protected-page.component';
-// Modelo para representar un campo de formulario
-interface FormField<T = any> {
-  value: T;
-  original: T;
-  valid: boolean;
-  touched: boolean;
+import { ActivatedRoute, Router } from '@angular/router';
+import { LocationModel } from '../../models/location.model';
+
+/**
+ * 
+ * @returns Custom form validators
+ */
+function nonEmptyTrimmedValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    if (typeof value === 'string' && value.trim() === '') {
+      return { emptyTrimmed: true };
+    }
+    return null;
+  };
 }
 
+function coordinatesValidator(control: AbstractControl): ValidationErrors | null {
+  const val = control.value;
+  if (!val || !Array.isArray(val) || val.length !== 2) return { invalidCoordinates: true };
+  const [lat, lng] = val;
+  if (typeof lat !== 'number' || typeof lng !== 'number') return { invalidCoordinates: true };
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return { invalidCoordinates: true };
+  return null;
+}
+
+/**
+ * Component
+ */
 @Component({
   selector: 'app-location-form',
   standalone: true,
@@ -47,8 +94,10 @@ interface FormField<T = any> {
     AuthProtectedPageComponent,
     HeaderComponent,
     CommonModule,
+    ReactiveFormsModule, 
     FormsModule,
     IonContent, 
+    CustomBackButtonComponent,
     IonButton,
     IonLabel,
     IonInput,
@@ -63,331 +112,488 @@ interface FormField<T = any> {
     IonSelect,
     IonSelectOption,
     IonCheckbox,
-    IonFab,
-    IonFabButton
+    IonSpinner,
+    IonCard,
+    IonCardContent,
+    IonCardTitle,
+    IonCardHeader,
   ]
 })
-export class LocationFormComponent implements OnInit, OnDestroy {
+export class LocationFormComponent implements OnInit, ViewWillEnter, OnDestroy {
   
-  @ViewChild('locationForm') locationForm!: NgForm;
-
-  // auth
+  // control
+  isLoading: boolean = false;
   isLoggedIn: boolean = false;
   private subscription?: Subscription;
 
-  // Los componentes de input no se ven bien en iOS
-  isIos = false;
+  // edit or create
+  isEdit: boolean = false;
+  headerTitle: string = 'Añadir Ubicación';
 
-  // Flag para indicar si estamos en modo edición
-  isEditMode = true;
-  allowImageEdit = false;
+  // location (if edit)
+  locationId: string | null = null;
+  location?: LocationModel;
+  
+  // Form group
+  form!: FormGroup;
+
+  // Auxiliar etiquetas
+  newTagControl = new FormControl('');
+
+  // Control de imagen
   imageOption: 'none' | 'url' | 'file' = 'none';
+  allowImageEdit: boolean = false; // Solo se usa en modo edición
 
-  formFields: Record<string, FormField> = {
-    name: { value: undefined, original: 'John', valid: false, touched: false },
-    address: { value: '', original: '', valid: true, touched: false },
-    description: { value: '', original: '', valid: true, touched: false },
-    longitude: { value: undefined, original: '', valid: false, touched: false },
-    latitude: { value: undefined, original: '', valid: false, touched: false },
-    coordinates: { value: '', original: '', valid: false, touched: false },
-    tags: { value: '', original: '', valid: true, touched: false },
-    imageUrl: { value: '', original: '', valid: true, touched: false }
-  };
-
-  name = '';
-  address = '';
-  description = '';
-  coordinates = '';
-  tagsString = '';
-  imageUrl = '';
-  imageFile: File | null = null;
-  fileError = '';
-
-  photo: string | null = null; // base64 o blob
-
-  public cameraPhoto?: SafeResourceUrl; 
+  // Cámara
+  public cameraPhoto?: SafeResourceUrl;
+  cameraPhotoBase64: string | null = null;
 
   constructor(
+    private fb: FormBuilder,
     private authService: AuthService,
     private locationService: LocationService,
     private sanitizer: DomSanitizer,
-    private platform: Platform
-  ) {
-    this.isIos = this.platform.is('ios');
-    addIcons({ removeCircle, closeCircle, checkmarkCircle, alertCircle, alert, close, camera });
+    private toastCtrl: ToastController,
+    private loadingCtrl: LoadingController,
+    private activatedRoute: ActivatedRoute,
+    private navCtrl: NavController,
+    private router: Router
+  ) { 
+    addIcons({
+      removeCircle, 
+      closeCircle, 
+      checkmarkCircle, 
+      alertCircle, 
+      alert, 
+      close, 
+      camera
+    })
   }
 
   ngOnInit() {
-    console.log(this.isLoggedIn)
     this.subscription = this.authService.userObservable$.subscribe(user => {
       this.isLoggedIn = !!user;
     });
+
+    this.form = this.fb.group({
+      name: ['', [Validators.required, nonEmptyTrimmedValidator()]],
+      coordinates: [null, [Validators.required, coordinatesValidator]],
+      address: ['', []],
+      description: ['', [Validators.maxLength(1000)]],
+      tags: [[], []],
+      imageUrl: [null, this.customImageUrlValidator.bind(this)],
+    });
+  }
+
+  ionViewWillEnter(): void {
+    this.isEdit = !(this.router.url.includes('/locations-add'));
+
+    // console.log('Edit mode: ', this.isEdit);      
+
+    if(this.isEdit) {
+      this.headerTitle = "Editar Ubicación"
+      this.locationId = this.activatedRoute.snapshot.paramMap.get('id');
+      if (!this.locationId) {
+        this.handleLocationNotFound();
+        return;
+      }
+      this.loadLocation(this.locationId);
+    } else {
+      this.locationId = null;
+      this.location = undefined;
+    }
   }
 
   ngOnDestroy() {
     this.subscription?.unsubscribe();
   }
 
-  getFormFieldStatusDebug(
-    model: NgModel,
-    fieldName: string
-  ): 'unchanged' | 'valid' | 'invalid' | 'empty' | 'pristine' {
-    const status = this.getFormFieldStatus(model, fieldName);
-    // console.log(`${fieldName}.status: ${status}`);
-    return status;
+  /**
+   * Cargar location en caso de edit
+   */
+  loadLocation(id: string) {
+    this.isLoading = true;
+    this.location = undefined;
+
+    this.locationService.getLocationById(id).subscribe({
+      next: (loc) => {
+        if (loc) {
+          this.location = loc;
+
+          this.form.patchValue({
+            name: this.location.name,
+            coordinates: this.location.coordinates || null,
+            address: this.location.address,
+            description: this.location.description,
+            tags: this.location.tags || [],
+          });
+
+        } else {
+          this.handleLocationNotFound();
+        }
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Error al cargar location:', err);
+        this.isLoading = false;
+        this.handleLocationNotFound();
+      }
+    });
   }
 
-  getFormFieldStatus(
-    model: NgModel,
-    fieldName: string
-  ): 'unchanged' | 'valid' | 'invalid' | 'empty' | 'pristine' {
-    const currentValue = (model.value ?? '').toString().trim();
-    const originalValue = (this.formFields[fieldName]?.original ?? '').toString().trim();
-
-    // 1. valor no tocado
-    if (!model.dirty && !model.touched) return 'pristine';
-  
-    // 2. invalid: el campo no cumple con las validaciones
-    if (model.invalid) return 'invalid';
-  
-    // 3. empty: campo vacio
-    if (currentValue === '') return 'empty';
-
-    // 4. unchanged: valor actual igual al original
-    if (currentValue === originalValue) return 'unchanged';
-
-    // 5. valid: pasa validaciones y no está vacío ni unchanged
-    if (model.valid) return 'valid';
-  
-    // 6. pristine: estado por defecto (sin interacción)
-    return 'pristine';
-  }
-  
-  getFormFieldIcon(model: NgModel, fieldName: string): string {
-    const status = this.getFormFieldStatusDebug(model, fieldName);
-  
-    switch (status) {
-      case 'valid':
-        return 'checkmark-circle';
-      case 'invalid':
-        return 'alert-circle';
-      case 'unchanged':
-        return 'remove-circle';
-      case 'empty':
-      case 'pristine':
-      default:
-        return '';
-    }
-  }
-  
-  getFormFieldColor(model: NgModel, fieldName: string): string | undefined {
-    const status = this.getFormFieldStatus(model, fieldName);
-  
-    switch (status) {
-      case 'valid':
-        return 'success'; // Verde o similar
-      case 'invalid':
-        return 'danger'; // Rojo
-      case 'unchanged':
-        return 'medium'; // Gris o neutro, para diferenciar unchanged
-      // empty y pristine no cambian color (undefined = estilo por defecto)
-      case 'empty':
-      case 'pristine':
-      default:
-        return undefined;
-    }
+  async handleLocationNotFound() {
+    this.isLoading = false; 
+    await this.presentToast('Ubicación no encontrada', 'danger');
+    setTimeout(() => {
+      this.navCtrl.navigateRoot('/locations');
+    }, 2000);
   }
 
-  // Establecer coordenadas desde el modal
+  /**
+   * Genericos: mostrar toast, loading....
+   */
+  async presentToast(message: string, color: 'success' | 'danger' | 'warning') {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 2000,
+      position: 'bottom',
+      color
+    });
+    await toast.present();
+  }
+
+  /** 
+   * Componente coord picker
+   */
   onCoordinatesChanged(coords: { lat: number; lng: number }) {
-    this.formFields['latitude'].value = coords.lat;
-    this.formFields['longitude'].value = coords.lng;
-    console.log('Coordenadas actualizadas:', coords);
+    this.form.get('coordinates')?.setValue([coords.lat, coords.lng]);
+    this.form.get('coordinates')?.markAsTouched();
+  }
+  
+  formatCoordinates(): string {
+    const coords = this.form.get('coordinates')?.value;
+    return coords ? `[${coords[0].toFixed(5)}, ${coords[1].toFixed(5)}]` : '';
   }
 
-  // Testing tags
+  /**
+   * Getters de FormControl
+   */
+  get nameControl(): FormControl {
+    return this.form.get('name') as FormControl;
+  }
 
-  tags: string[] = [];
-  newTag: string = '';
+  get nameControlEqual(): boolean {
+    if (!this.isEdit || !this.location) return false;
+    const val = this.nameControl.value;
+    return val && val.trim() === this.location.name;
+  }
 
-  addTag() {
-    const trimmed = this.newTag.trim();
-    if (trimmed && !this.tags.includes(trimmed)) {
-      this.tags.push(trimmed);
+  get coordinatesControl(): FormControl {
+    return this.form.get('coordinates') as FormControl;
+  }
+
+  get coordinatesControlEqual(): boolean {
+    if (!this.isEdit || !this.location) return false;
+    const val = this.coordinatesControl.value;
+    if (!val || !Array.isArray(val) || val.length !== 2) return false;
+    const [lat, lng] = val;
+    const [locLat, locLng] = this.location.coordinates || [null, null];
+    return lat === locLat && lng === locLng;
+  }
+
+  get addressControl(): FormControl {
+    return this.form.get('address') as FormControl;
+  }
+
+  get addressControlEqual(): boolean {
+    if (!this.isEdit || !this.location) return false;
+    const val = this.addressControl.value;
+    return val && val.trim() === this.location.address;
+  }
+
+  get descriptionControl(): FormControl {
+    return this.form.get('description') as FormControl;
+  }
+
+  get descriptionControlEqual(): boolean {
+    if (!this.isEdit || !this.location) return false;
+    const val = this.descriptionControl.value;
+    return val && val.trim() === this.location.description;
+  }
+
+  get tagsControl(): FormControl {
+    return this.form.get('tags') as FormControl;
+  }
+
+  get tagsControlEqual(): boolean {
+    if (!this.isEdit || !this.location) return false;
+    const formTags = [...(this.tagsControl.value || [])].sort();
+    const originalTags = [...(this.location.tags || [])].sort();
+  
+    if (formTags.length !== originalTags.length) return false;
+  
+    return formTags.every((tag, i) => tag === originalTags[i]);
+  }
+  
+  get imageUrlControl(): FormControl {
+    return this.form.get('imageUrl') as FormControl;
+  }
+
+  // Validador de Url para la imagen
+  customImageUrlValidator(control: AbstractControl): ValidationErrors | null {
+    const shouldValidate = 
+      (this.isEdit && this.allowImageEdit && this.imageOption === 'url') || 
+      (!this.isEdit && this.imageOption === 'url');
+
+    const value = control.value?.trim();
+    if (!shouldValidate) return null;
+    if (!value) return null;
+
+    const urlRegex = /^(https?:\/\/)[^\s$.?#].[^\s]*$/i;
+    return urlRegex.test(value) ? null : { invalidUrl: true };
+  }
+
+  // Necesarios para validar en funcion de otros campos
+  onAllowImageEditChange(newVal: boolean): void {
+    this.allowImageEdit = newVal;
+    this.imageUrlControl.updateValueAndValidity();
+  }
+  onImageOptionChange(newVal: 'none' | 'url' | 'file'): void {
+    this.imageOption = newVal;
+    this.imageUrlControl.updateValueAndValidity();
+  }
+
+  /**
+   * Estilos de campos del formulario
+   */
+  getFormFieldIcon(control: FormControl, fieldName: string, originalValue?: string): string {
+    if (!control) return '';
+  
+    if (control.invalid && (control.dirty || control.touched)) {
+      return 'alert-circle';
     }
-    this.newTag = '';
+  
+    if (originalValue !== undefined) {
+      if (control.value?.trim() === originalValue) {
+        return 'remove-circle';  // igual, sin cambios
+      }
+    }
+
+    if (!control.touched) return '';
+    
+    if (control.valid) {
+      return 'checkmark-circle';
+    }
+  
+    return '';
   }
 
+  // Especifico para coordenadas (array)
+  getCoordinatesFieldIcon(): string {
+    const control = this.coordinatesControl;
+    if (!control) return '';
+  
+    if (this.coordinatesControlEqual) {
+      return 'remove-circle'; // sin cambios
+    }
+  
+    if (control.invalid && (control.dirty || control.touched)) {
+      return 'alert-circle';
+    }
+  
+    if (control.valid) {
+      return 'checkmark-circle';
+    }
+  
+    return '';
+  }
+
+  /**
+   * Manejo de etiquetas
+   */
+  addTag() {
+    const tag = this.newTagControl.value?.trim();
+    const currentTags = this.tagsControl;
+  
+    if (tag && currentTags && !currentTags.value.includes(tag)) {
+      currentTags.setValue([...currentTags.value, tag]);
+    }
+  
+    this.newTagControl.setValue('');
+  }
+  
   removeTag(index: number) {
-    this.tags.splice(index, 1);
+    const currentTags = this.tagsControl;
+    if (currentTags) {
+      const updated = [...currentTags.value];
+      updated.splice(index, 1);
+      currentTags.setValue(updated);
+    }
   }
+  
+  /**
+   * Envío del formulario
+   */
+  onSubmit() {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+  
+    const formData = this.form.value;
+  
+    let imageUrl = null;
+    let imageFile = null;
 
-  areTagsValid(tags: string[]): boolean {
-    return tags.every(tag => typeof tag === 'string' && tag.trim().length > 0);
-  }
+    if (!this.isEdit) {
+      // imagen
+      if (this.imageOption === 'url') {
+        imageUrl = this.imageUrlControl.value?.trim() || null;
+      } else if (this.imageOption === 'file' && this.cameraPhotoBase64) {
+        imageFile = this.base64ToFile(this.cameraPhotoBase64);
+      }
 
-  public async takePicture(): Promise<void> { 
-    try {
-      const image = await Camera.getPhoto({ 
-        quality: 100,
-        allowEditing: false,
-        resultType: CameraResultType.Uri
+      const locationData = {
+        name: formData.name,
+        coordinates: JSON.stringify(formData.coordinates),
+        address: formData.address,
+        description: formData.description,
+        tags: JSON.stringify(formData.tags),
+        imageUrl,
+        imageFile,
+      };
+
+      // console.log('Enviando ubicación (nuevo):', locationData);
+
+      this.isLoading = true;
+
+      this.locationService.createLocation(locationData).subscribe({
+        next: (created) => {
+          this.isLoading = false;
+          this.presentToast('Ubicación creada correctamente', 'success');
+          this.resetFormValues();
+          this.navCtrl.navigateForward(`/locations/${created.id}`);
+      },
+        error: (err) => {
+          this.isLoading = false;
+          console.error('Error al crear ubicación', err);
+          this.presentToast('Error al crear ubicación', 'danger');
+        },
       });
 
-      if (image.webPath) {
-        this.cameraPhoto = this.sanitizer.bypassSecurityTrustResourceUrl(image.webPath); 
+    } else {
+      // Edición: solo enviar los campos que hayan cambiado
+
+      if(this.allowImageEdit) {
+        if (this.imageOption === 'url') {
+          imageUrl = this.imageUrlControl.value?.trim() || null;
+        } else if (this.imageOption === 'file' && this.cameraPhotoBase64) {
+          imageFile = this.base64ToFile(this.cameraPhotoBase64);
+        } else {
+          // fuerza el borrado de la imagen
+          imageUrl = ' '
+        }
       }
-    } catch (error) {
+
+      const changedData = {
+        name: !this.nameControlEqual ? formData.name : undefined,
+        coordinates: !this.coordinatesControlEqual ? JSON.stringify(formData.coordinates) : undefined,
+        address: !this.addressControlEqual ? formData.address : undefined,
+        description: !this.descriptionControlEqual ? formData.description : undefined,
+        tags: !this.tagsControlEqual ? JSON.stringify(formData.tags) : undefined,
+        imageUrl: imageUrl || undefined,
+        imageFile: imageFile || undefined
+      }
+
+      const hasChangedData = Object.values(changedData).some(value => value !== undefined);
+
+      // Antes de enviar, intenta comprobar que changedData tenga al menos un campo que no sea null...
+      if(this.locationId && hasChangedData) {
+        // console.log('Actualizando ubicación (id=', this.locationId, 'con la siguiente información: ', changedData);
+        this.isLoading = true;
+        this.locationService.updateLocation(this.locationId, changedData).subscribe({
+          next: (created) => {
+            this.isLoading = false;
+            this.presentToast('Ubicación actualizada correctamente', 'success');
+            this.resetFormValues();
+            this.navCtrl.navigateBack(`/locations/${created.id}`);
+        },
+          error: (err) => {
+            this.isLoading = false;
+            console.error('Error al crear ubicación', err);
+            this.presentToast('Error al crear ubicación', 'danger');
+          },
+        });
+      } else {
+        this.presentToast('Actualice al menos un campo', 'warning');
+      }
+    }
+  }
+
+  /**
+   * Reset de los atributos/formularios
+  */
+  resetFormValues() {
+    this.cameraPhotoBase64 = null;
+    this.cameraPhoto = undefined;
+    this.imageOption = 'none';
+    this.form.reset();
+    // this.isEdit = false;
+  }
+  
+  /**
+   * Camara e imagen
+   */
+  public async takePicture(): Promise<void> {
+    const allowedMimeTypes: string[] = ['jpg', 'jpeg', 'png', 'webp'];
+
+    try {
+      const image = await Camera.getPhoto({
+        quality: 100,
+        allowEditing: false,
+        // resultType: CameraResultType.Uri,
+        resultType: CameraResultType.DataUrl,
+        correctOrientation: true
+      });
+
+      if (!image.dataUrl) return;
+
+      const extension = image.format;
+      if (!allowedMimeTypes.includes(extension)) {
+        this.presentToast('Formato de imagen no permitido (solo JPG, PNG, WEBP).', 'danger');
+        return;
+      }
+
+      this.cameraPhotoBase64 = image.dataUrl;
+      this.cameraPhoto = this.sanitizer.bypassSecurityTrustResourceUrl(this.cameraPhotoBase64);
+    } catch (error: any) {
+      if (error?.message?.toLowerCase().includes('user cancelled')) {
+        // Si el usuario cancela, no hacemos nada
+        return;
+      }
+
+      // Otros errores sí se notifican
+      this.presentToast('Error al capturar la foto.', 'danger');
       console.error('Error al capturar la foto:', error);
     }
   }
 
-  handleImageInput() {
-    // Si más adelante quieres integrar @capacitor/camera
-    console.log('on handleInput');
-  }
-
-  // -----------------
-
-  // Compara el valor actual del campo con el original
-  hasChanged(fieldName: string): boolean {
-    // if (!this.isEditMode) return true;
-    const field = this.formFields[fieldName];
-    return field.value !== field.original;   
-  }
-
-
-
-
-  loadLocation(location: any) {
-    // this.isEditMode = true;
-    // this.formFields.name.original = location.name;
-    // this.formFields.name.value = location.name;
-  
-    // this.formFields.address.original = location.address;
-    // this.formFields.address.value = location.address;
-  
-    // ... repite para los demás campos
-  }
-  
-  getFieldStatus(fieldName: string): 'valid' | 'invalid' | 'unchanged' {
-    const field = this.formFields[fieldName];
-    if (!field.touched || !this.hasChanged(fieldName)) return 'unchanged';
-    return field.valid ? 'valid' : 'invalid';
-  }
-  
-  getFieldIcon(fieldName: string): string {
-    const status = this.getFieldStatus(fieldName);
-    if (status === 'valid') return 'checkmark-circle';
-    if (status === 'invalid') return 'close-circle';
-    return 'remove-circle';
-  }
-  
-  getFieldColor(fieldName: string): string {
-    const status = this.getFieldStatus(fieldName);
-    if (status === 'valid') return 'success';
-    if (status === 'invalid') return 'danger';
-    return 'medium';
-  }
-  
-  onFieldInput(fieldName: string): void {
-    const field = this.formFields[fieldName];
-    field.touched = true;
-    field.valid = field.value.trim().length >= 3;
-  }
-  onFieldBlur(fieldName: string): void {
-    // Puedes forzar revalidación si quieres, o simplemente marcar como tocado
-    this.formFields[fieldName].touched = true;
-  }
-
-  /**
-   * 
-   */
-  get canSubmit(): boolean {
-    if (!this.locationForm || this.locationForm.invalid) return false;
-  
-    if (!this.isValidCoordinates(this.coordinates)) return false;
-  
-    if (this.tagsString.trim() !== '' && !this.isValidTags(this.tagsString)) return false;
-  
-    if (this.fileError) return false;
-  
-    return true;
-  }
-  
-  onSubmit() {
-    console.log('Formulario inválido');
-    console.log(this.locationForm);
-    if (!this.canSubmit) return;
-  
-    const locationData = {
-      name: this.name.trim(),
-      address: this.address.trim(),
-      description: this.description.trim(),
-      coordinates: this.coordinates,
-      tags: this.tagsString,
-      imageUrl: this.imageUrl,
-      imageFile: this.imageFile,
-    };
-  
-    console.log('Enviando ubicación:', locationData);
-  
-    // TODO: Llama aquí a tu servicio de envío o guardar
-    this.locationService.createLocation(locationData).subscribe({
-      next: (created) => {
-        console.log('Ubicación creada:', created);
-        // Aquí puedes redirigir o mostrar mensaje de éxito
-      },
-      error: (err) => {
-        console.error('Error al crear ubicación', err);
-        // Aquí puedes mostrar mensaje de error
-      }
-    });
-  }
-  
-
-  isValidCoordinates(value: string): boolean {
-    try {
-      const coords = JSON.parse(value);
-      return (
-        Array.isArray(coords) &&
-        coords.length === 2 &&
-        typeof coords[0] === 'number' &&
-        typeof coords[1] === 'number'
-      );
-    } catch {
-      return false;
-    }
-  }
-
-  isValidTags(value: string): boolean {
-    try {
-      const tags = JSON.parse(value);
-      return (
-        Array.isArray(tags) &&
-        tags.every(tag => typeof tag === 'string')
-      );
-    } catch {
-      return false;
-    }
-  }
-
-  onFileChange(event: any) {
-    this.fileError = '';
-    const file = event.target.files?.[0];
-    if (!file) {
-      this.imageFile = null;
-      return;
+  base64ToFile(base64Data: string): File {
+    const arr = base64Data.split(',');
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    const mime = mimeMatch ? mimeMatch[1] : '';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
     }
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      this.fileError = 'Formato de archivo no válido. Solo jpg, jpeg, png, webp.';
-      this.imageFile = null;
-      return;
-    }
+    // Generar nombre aleatorio
+    const ext = mime.split('/')[1] || 'png';
+    const randomName = `image-${Math.random().toString(36).substring(2, 10)}.${ext}`;
 
-    this.imageFile = file;
+    const blob = new Blob([u8arr], { type: mime });
+    return new File([blob], randomName, { type: mime });
   }
-
 }

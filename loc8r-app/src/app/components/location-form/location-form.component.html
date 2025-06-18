@@ -1,8 +1,6 @@
-<app-header title="Añadir Ubicación"></app-header>
+<app-header [title]="headerTitle"></app-header>
 
 <ion-content class="ion-padding">
-  <!-- Contenido protegido -->
-
   <ng-container *ngIf="!isLoggedIn; else protectedContent">
     <div class="content-container">
       <app-auth-protected-page></app-auth-protected-page>
@@ -11,373 +9,271 @@
 
   <ng-template #protectedContent>
     <div class="content-container">
+      <ng-container *ngIf="!isLoading; else loadingTmpl">
 
-
-
-      <form #locationForm="ngForm" (ngSubmit)="onSubmit()" novalidate>
+        <ng-container *ngIf="isEdit">
+          <app-custom-back-button styleType="transparent" size="large"></app-custom-back-button>
+        </ng-container>
 
         <br />
         <h2>Formulario de Ubicación</h2>
+        <br />
         <p>Por favor, completa los campos obligatorios marcados con (*)</p>
         <br />
+        
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
 
-        <br />
-        <!-- Nombre de location -->
-        <div class="form-item">
-          <ion-input
-            class="form-input"
-            [fill]="isIos ? 'solid' : 'outline'"
-            label="Nombre (*)"
-            label-placement="stacked"
-            placeholder="Introduce el nombre"
-            name="name"
-            type="text"
-            [(ngModel)]="formFields['name'].value"
-            #nameModel="ngModel"
-            required
-            maxlength="100"
-            (ionBlur)="nameModel.control.markAsTouched()"
-          >
-            <ion-icon
-              slot="end"
-              [name]="getFormFieldIcon(nameModel, 'name')"
-              [class]="getFormFieldStatus(nameModel, 'name')"
-              class="status-icon"
-              aria-hidden="true"
-            ></ion-icon>
-          </ion-input>
-
-          <ion-note color="danger" *ngIf="nameModel.invalid && (nameModel.dirty || nameModel.touched)">
-            <ng-container *ngIf="nameModel.errors?.['required']">
-              El nombre es obligatorio.
-            </ng-container>
-            <ng-container *ngIf="nameModel.errors?.['minlength']">
-              El nombre debe tener al menos 3 caracteres.
-            </ng-container>
-            <ng-container *ngIf="nameModel.errors?.['maxlength']">
-              El nombre no puede tener más de 100 caracteres.
-            </ng-container>
-          </ion-note>
-        </div>
-        <br />
-
-        <!-- Coordenadas -->
-        <div class="form-item">
-          <ion-label class="form-label" position="stacked">Coordenadas (*)</ion-label>
-          <ion-row class="ion-padding-top">
-            <ion-col size="6">
-              <ion-input
-                value="number"
-                label="Latitud (*)"
-                label-placement="stacked"
-                type="number"
-                name="latitude"
-                [(ngModel)]="formFields['latitude'].value"
-                readonly
-                required
-                min=-90
-                max=90
-                step="any"
-                [fill]="isIos ? 'solid' : 'outline'"
-                #latitudeModel="ngModel"
-                [class.valid]="
-                  latitudeModel?.valid &&
-                  latitudeModel?.touched
-                "
-                [class.invalid]="
-                  latitudeModel?.touched &&
-                  latitudeModel?.invalid
-                "
-              >
-                <ion-icon
+          <!-- Nombre -->
+          <ion-item fill="clear" lines="none" class="ion-margin-top ion-no-padding">
+            <ion-input
+              class="ion-margin-top"
+              [class.unchanged]="nameControlEqual"
+              label="Nombre (*)"
+              label-placement="floating"
+              fill="outline"
+              [formControl]="nameControl"
+              type="text"
+              placeholder="Introduce el nombre"
+            >
+              <ion-icon
                 slot="end"
-                [name]="getFormFieldIcon(latitudeModel, 'latitude')"
-                [class]="getFormFieldStatus(latitudeModel, 'latitude')"
+                [name]="getFormFieldIcon(nameControl, 'name', isEdit ? location?.name : undefined)"
                 class="status-icon"
+                [class.unchanged]="nameControlEqual"
+                [class.invalid]="!nameControlEqual && nameControl.invalid"
+                [class.valid]="!nameControlEqual && !nameControl.invalid && nameControl.valid"
                 aria-hidden="true"
               ></ion-icon>
-              </ion-input>
-              <ion-note color="danger" *ngIf="latitudeModel.invalid && (latitudeModel.dirty || latitudeModel.touched)">
-                La latitud es obligatoria y debe estar entre -90 y 90.
-              </ion-note>
-            </ion-col>
+            </ion-input>
+          </ion-item>
+          <ion-note color="danger" *ngIf="nameControl?.touched && nameControl?.invalid">
+            El nombre es obligatorio.
+          </ion-note>
+          <br />
+          
+          <!-- Coordenadas -->
+          <ion-item fill="clear" lines="none" class="ion-margin-top ion-no-padding">
+            <ion-input
+              class="ion-margin-top ion-margin-end"
+              [class.unchanged]="coordinatesControlEqual"
+              fill="outline"
+              label="Ubicación (*)"
+              label-placement="floating"
+              [value]="formatCoordinates()"
+              readonly
+              placeholder="Selecciona unas coordenadas"
+            >
+              <ion-icon
+                slot="end"
+                [name]="getCoordinatesFieldIcon()"
+                class="status-icon"
+                [class.unchanged]="coordinatesControlEqual"
+                [class.invalid]="!coordinatesControlEqual && coordinatesControl.invalid"
+                [class.valid]="!coordinatesControlEqual && !coordinatesControl.invalid && coordinatesControl.valid"
+                aria-hidden="true"
+              ></ion-icon>
+            </ion-input>
 
-            <ion-col size="6">
-              <ion-input
-                label="Longitud (*)"
-                label-placement="stacked"
-                type="number"
-                name="longitude"
-                [(ngModel)]="formFields['longitude'].value"
-                required
-                readonly
-                min=-180
-                max=180
-                fill="outline"
-                #longitudeModel="ngModel"
-                [class.valid]="
-                  longitudeModel?.valid &&
-                  longitudeModel?.touched
-                "
-                [class.invalid]="
-                  longitudeModel?.touched &&
-                  longitudeModel?.invalid
-                "
-              >
-                <ion-icon
-                  slot="end"
-                  [name]="getFormFieldIcon(longitudeModel, 'longitude')"
-                  [class]="getFormFieldStatus(longitudeModel, 'longitude')"
-                  class="status-icon"
-                  aria-hidden="true"
-                ></ion-icon>
-              </ion-input>
-              <ion-note color="danger" *ngIf="longitudeModel.invalid && (longitudeModel.dirty || longitudeModel.touched)">
-                La longitud es obligatoria y debe estar entre -180 y 180.
-              </ion-note>
-            </ion-col>
-          </ion-row>
-          <ion-row class="ion-justify-content-end">
-            <ion-col size="auto">
-              <app-coord-picker
-                [lat]="formFields['latitude'].value"
-                [lng]="formFields['longitude'].value"
-                (coordinatesChange)="onCoordinatesChanged($event)"
-              ></app-coord-picker>
-            </ion-col>
-          </ion-row>
-        </div>   
-        <br />
+            <app-coord-picker
+              class="ion-margin-top"
+              [style]="'search-card-style'"
+              [size]="'large'"
+              [color]="'tertiary'"
+              [lat]="coordinatesControl.value?.[0] || 0.0"
+              [lng]="coordinatesControl.value?.[1] || 0.0"
+              (coordinatesChange)="onCoordinatesChanged($event)"
+            ></app-coord-picker>
+          </ion-item>
+          <ion-note color="danger" *ngIf="coordinatesControl.touched && coordinatesControl.invalid">
+            Selecciona unas coordenadas válidas.
+          </ion-note>
+          <br />
 
-        <!-- Direccion -->
-        <div class="form-item">
-          <ion-input
-            class="form-input"
-            [class.valid]="getFormFieldStatus(addressModel, 'address') === 'valid'"
-            [fill]="isIos ? 'solid' : 'outline'"
-            label="Dirección (opcional)"
-            label-placement="stacked"
-            placeholder="Introduce la dirección"
-            name="address"
-            type="text"
-            [(ngModel)]="formFields['address'].value"
-            #addressModel="ngModel"
-            (ionBlur)="addressModel.control.markAsTouched()"
+          <!-- Direccion -->
+          <ion-item fill="clear" lines="none" class="ion-margin-top ion-no-padding">
+            <ion-input
+              class="ion-margin-top"
+              [class.unchanged]="addressControlEqual"
+              label="Dirección (Opcional)"
+              label-placement="floating"
+              fill="outline"
+              [formControl]="addressControl"
+              type="text"
+              placeholder="Introduce la dirección"
+            >
+              <ion-icon
+                slot="end"
+                [name]="getFormFieldIcon(addressControl, 'address', isEdit ? location?.address : undefined)"
+                class="status-icon"
+                [class.unchanged]="addressControlEqual"
+                [class.invalid]="!addressControlEqual && addressControl.invalid"
+                [class.valid]="!addressControlEqual && !addressControl.invalid && addressControl.valid"
+                aria-hidden="true"
+              ></ion-icon>
+            </ion-input>
+          </ion-item>
+          <ion-note color="danger" *ngIf="addressControl?.touched && addressControl?.invalid">
+            Introduce una dirección válida.
+          </ion-note>
+          <br />
+
+          <!-- Descripcion -->
+          <ion-item fill="clear" lines="none" class="ion-margin-top ion-no-padding">
+            <ion-textarea
+              class="ion-margin-top"
+              [class.unchanged]="descriptionControlEqual"
+              label="Descripción (Opcional)"
+              label-placement="floating"
+              fill="outline"
+              [formControl]="descriptionControl"
+              type="text"
+              placeholder="Descripción de la Ubicación..."
+              counter="true"
+              maxlength="1000"
+              rows="5"
+              auto-grow="true"
+              (ionBlur)="descriptionControl.markAsTouched()"
+            ></ion-textarea>
+          </ion-item>
+          <ion-note color="danger" *ngIf="descriptionControl?.touched && descriptionControl?.invalid">
+            La descripción no puede superar los 1000 caracteres.
+          </ion-note>
+          <br />
+
+          <!-- Tags -->
+          <div class="form-item">
+            <div class="tags-container ion-margin-end">
+              <ion-row>
+                <ion-col>
+                  <ion-input
+                    fill="outline"
+                    label="Etiquetas (opcional)"
+                    label-placement="stacked"
+                    placeholder="Escribe una etiqueta y pulsa Enter o Espacio"
+                    [formControl]="newTagControl"
+                    (keydown.space)="addTag()"
+                  ></ion-input>
+                </ion-col>
+              </ion-row>
+
+              <ion-row class="ion-justify-content-start">
+                <ion-col>
+                  <ion-chip *ngFor="let tag of tagsControl.value; let i = index" color="tertiary">
+                    <ion-label>{{ tag }}</ion-label>
+                    <ion-icon name="close" (click)="removeTag(i)" class="ion-padding-start"></ion-icon>
+                  </ion-chip>
+                </ion-col>
+              </ion-row>
+            </div>
+          </div>
+
+          <!-- Imagen -->
+          <ion-item *ngIf="isEdit" fill="clear" lines="none" class="ion-margin-vertical ion-no-padding">
+            <ion-checkbox
+              class="ion-margin"
+              fill="outline"
+              [(ngModel)]="allowImageEdit"
+              labelPlacement="end"
+              [ngModelOptions]="{ standalone: true }"
+              (ionChange)="onAllowImageEditChange($event.detail.checked)"
+            >
+              Editar imagen
+            </ion-checkbox>
+          </ion-item>
+
+          <div
+            *ngIf="!isEdit || allowImageEdit"
+            class="ion-margin-vertical ion-no-padding"
           >
-            <ion-icon
-              slot="end"
-              [name]="getFormFieldIcon(addressModel, 'address')"
-              [class]="getFormFieldStatus(addressModel, 'address')"
-              class="status-icon"
-              aria-hidden="true"
-            ></ion-icon>
-          </ion-input>
-        </div>
-        <br />
+            <ion-select
+              class="ion-padding-end"
+              label="Imagen (opcional)"
+              label-placement="stacked"
+              [(ngModel)]="imageOption"
+              [ngModelOptions]="{ standalone: true }"
+              fill="outline"
+              (ionChange)="onImageOptionChange($event.detail.value)"
+            >
+              <ion-select-option value="none">Ninguna</ion-select-option>
+              <ion-select-option value="url">URL</ion-select-option>
+              <ion-select-option value="file">Cámara/Dispositivo</ion-select-option>
+            </ion-select>
 
-        <!-- Descripcion -->
-        <div class="form-item">
-          <ion-textarea
-            class="form-input"
-            [class.valid]="getFormFieldStatus(descriptionModel, 'description') === 'valid'"
-            [fill]="isIos ? 'solid' : 'outline'"
-            label="Descripción (opcional)"
-            label-placement="stacked"
-            placeholder="Introduce una descripción"
-            name="description"
-            type="text"
-            [(ngModel)]="formFields['description'].value"
-            #descriptionModel="ngModel"
-            counter="true"
-            maxlength="1000"
-            rows="3"
-            auto-grow="true"
-            (ionBlur)="addressModel.control.markAsTouched()"
-          ></ion-textarea>
-        </div>
-        <br />
+            <!-- URL de imagen -->
+            <ion-input
+              *ngIf="imageOption === 'url'"
+              class="ion-margin-top"
+              label="URL de imagen"
+              label-placement="floating"
+              fill="outline"
+              [formControl]="imageUrlControl"
+              type="url"
+              required="false"
+              placeholder="https://..."
+              (ionBlur)="imageUrlControl.markAsTouched()"
+            >
+            </ion-input>
+            <ion-note color="danger" *ngIf="imageUrlControl?.touched && imageUrlControl?.invalid">
+              URL no válida.
+            </ion-note>
+          
+            <!-- Imagen desde dispositivo -->
+            <ion-row *ngIf="imageOption === 'file'" class="ion-margin-top">
+              <ion-col size="12" size-md="6" offset-md="3">
+                <ion-card class="ion-no-padding">
+                  <ion-card-header>
+                    <ion-card-title>Imagen desde dispositivo</ion-card-title>
+                  </ion-card-header>
+                  <ion-card-content>
+                    <ion-button
+                      expand="block"
+                      fill="outline"
+                      color="primary"
+                      (click)="takePicture()"
+                    >
+                      <ion-icon slot="start" name="camera"></ion-icon>
+                      Tomar foto o seleccionar imagen
+                    </ion-button>
 
-        <!-- Tags -->
-        <div class="form-item">
-          <div class="tags-container">
-            <!-- Input de texto con IonInput -->
-            <ion-row>
-              <ion-col>
-                <ion-input
-                  class="form-input"
-                  fill="outline"
-                  label="Etiquetas (opcional)"
-                  label-placement="stacked"
-                  placeholder="Escribe una etiqueta y pulsa Enter o Espacio"
-                  name="newTag"
-                  type="text"
-                  [(ngModel)]="newTag"
-                  name="newTag"
-                  [ngModelOptions]="{ standalone: true }"
-                  (keydown.enter)="addTag()"
-                  (keydown.space)="addTag()"
-                  class="tag-input"
-                ></ion-input>
-                <ion-note color="danger" *ngIf="tags.length > 0 && !areTagsValid(tags)">
-                  Alguna etiqueta no es válida. Solo se permiten cadenas de texto.
-                </ion-note>
-              </ion-col>
-            </ion-row>
-            <ion-row class="ion-justify-content-start">
-              <ion-col>
-                <!-- Chips ya añadidos -->
-                <ion-chip *ngFor="let tag of tags; let i = index" color="tertiary">
-                  <ion-label>{{ tag }}</ion-label>
-                  <ion-icon name="close" (click)="removeTag(i)" class="ion-padding-start"></ion-icon>
-                </ion-chip>
+                    <!-- Vista previa -->
+                    <div *ngIf="cameraPhoto" class="ion-text-center" style="margin-top: 16px;">
+                      <ion-label color="medium" class="ion-text-uppercase" style="font-weight: 600;">
+                        Previsualización
+                      </ion-label>
+                      <img
+                        [src]="cameraPhoto"
+                        alt="Previsualización"
+                        style="
+                          width: 100%;
+                          max-height: 500px;
+                          object-fit: contain;
+                          border-radius: 12px;
+                          border: 1px solid var(--ion-color-medium-shade);
+                          margin-top: 8px;
+                          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+                        "
+                      />
+                    </div>
+                  </ion-card-content>
+                </ion-card>
               </ion-col>
             </ion-row>
           </div>
-        </div>
-        <br />
 
-        <!-- Image (None, imageUrl, imageFile) -->
-        <div class="form-item">
-          <!-- Checkbox solo en modo edición -->
-          <ion-row *ngIf="isEditMode">
-            <ion-col>
-              <ion-checkbox
-                [(ngModel)]="allowImageEdit"
-                labelPlacement="end"
-                [ngModelOptions]="{ standalone: true }"
-              >
-                Editar imagen
-              </ion-checkbox>
-            </ion-col>
-          </ion-row>
+
           <br />
+          <ion-button class="ion-margin-vertical" expand="full" type="submit" [disabled]="form.invalid">
+            Guardar
+          </ion-button>
+        </form>
 
-          <!-- Select si no estamos editando o si el checkbox está activo -->
-          <div id="image-select-container" *ngIf="!isEditMode || allowImageEdit">
-            <ion-row class="ion-padding-vertical">
-              <ion-col>
-                <ion-select
-                  label="Imagen (opcional)"
-                  label-placement="stacked"
-                  [(ngModel)]="imageOption"
-                  [ngModelOptions]="{ standalone: true }"
-                  fill="outline"
-                >
-                  <ion-select-option value="none">Ninguna</ion-select-option>
-                  <ion-select-option value="url">URL</ion-select-option>
-                  <ion-select-option value="file">Cámara/Dispositivo</ion-select-option>
-                </ion-select>
-              </ion-col>
-            </ion-row>
+      </ng-container>
 
-            <!-- Campos condicionales según imageOption -->
-            <ion-row *ngIf="imageOption === 'url'">
-              <ion-col>
-                <ion-input
-                  class="form-input"
-                  [class.valid]="getFormFieldStatus(imageUrlModel, 'imageUrl') === 'valid'"
-                  fill="outline"
-                  label="URL de Imagen (opcional)"
-                  label-placement="stacked"
-                  placeholder="Introduce una URL de imagen"
-                  name="imageUrl"
-                  type="url"
-                  pattern="https?://.+"
-                  [(ngModel)]="formFields['imageUrl'].value"
-                  #imageUrlModel="ngModel"
-                  (ionBlur)="imageUrlModel.control.markAsTouched()"
-                >
-                  <ion-icon
-                    slot="end"
-                    [name]="getFormFieldIcon(imageUrlModel, 'imageUrl')"
-                    [class]="getFormFieldStatus(imageUrlModel, 'imageUrl')"
-                    class="status-icon"
-                    aria-hidden="true"
-                  ></ion-icon>
-                </ion-input>
-                <ion-note color="danger" *ngIf="imageUrlModel.invalid && (imageUrlModel.dirty || imageUrlModel.touched)">
-                  La URL debe ser válida (http o https).
-                </ion-note>
-              </ion-col>
-            </ion-row>
-
-            <ion-row *ngIf="imageOption === 'file'">
-              <ion-col>
-                <!-- Botón para subir imagen o tomar foto -->
-                <ion-item lines="none">
-                  <ion-label position="stacked">Imagen desde dispositivo</ion-label>
-                  <ion-button
-                    expand="block"
-                    fill="outline"
-                    (click)="takePicture()"
-                  >
-                    <ion-icon name="camera" slot="start"></ion-icon>
-                    Seleccionar o tomar foto
-                  </ion-button>
-                </ion-item>
-            
-                <!-- Input file oculto, lanzado por el botón -->
-                <input
-                  type="file"
-                  accept="image/*"
-                  (change)="onFileChange($event)"
-                  #fileInput
-                  hidden
-                />
-            
-                <!-- Vista previa -->
-                <div *ngIf="photo" style="margin-top: 12px;">
-                  <ion-label>Previsualización</ion-label>
-                  <img
-                    [src]="photo"
-                    alt="Previsualización"
-                    style="width: 100%; max-height: 300px; object-fit: contain; border-radius: 12px; border: 1px solid #ccc; margin-top: 8px;"
-                  />
-                </div>
-            
-                <!-- Nota de error -->
-                <ion-note color="danger" *ngIf="fileError">{{ fileError }}</ion-note>
-              </ion-col>
-            </ion-row>
-          </div>    
-        </div>
-
-
-        <br />
-        <br />
-        <br />
-        <!-- imageUrl (opcional, validación URL) -->
-        <ion-item>
-          <ion-label position="floating">URL Imagen</ion-label>
-          <ion-input
-            [(ngModel)]="imageUrl"
-            name="imageUrl"
-            #imageUrlModel="ngModel"
-            type="url"
-            pattern="https://.+"
-          ></ion-input>
-        </ion-item>
-        <ion-note color="danger" *ngIf="imageUrl && imageUrlModel.invalid && (imageUrlModel.dirty || imageUrlModel.touched)">
-          La URL debe ser válida (https).
-        </ion-note>
-
-        <!-- imageFile (opcional, validación en controlador) -->
-        <ion-item>
-          <ion-label position="floating">Archivo Imagen</ion-label>
-          <input
-            type="file"
-            (change)="onFileChange($event)"
-            accept=".jpg,.jpeg,.png,.webp"
-          />
-        </ion-item>
-        <ion-note color="danger" *ngIf="fileError">{{ fileError }}</ion-note>
-        <br />
-        
-
-        <ion-button expand="block" type="submit" [disabled]="!canSubmit">
-          Enviar
-        </ion-button>
-      </form>
+      <ng-template #loadingTmpl>
+          <div class="spinner-wrapper">
+            <ion-spinner name="crescent" color="primary"></ion-spinner>
+          </div>
+      </ng-template>
     </div>
   </ng-template>
 </ion-content>

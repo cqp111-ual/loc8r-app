@@ -27,6 +27,10 @@ export const routes: Routes = [
         loadComponent: () => import('./components/location-details/location-details.component').then(m => m.LocationDetailsComponent)
       },
       {
+        path: 'locations/:id/edit',
+        loadComponent: () => import('./components/location-form/location-form.component').then(m => m.LocationFormComponent)
+      },
+      {
         path: 'locations-add',
         loadComponent: () => import('./components/location-form/location-form.component').then(m => m.LocationFormComponent)
       },

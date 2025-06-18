@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { catchError, map, timeout } from 'rxjs/operators';
 import { ApiResponse, PaginatedResults, Location, LocationFSQ, ImportResponse } from '../interfaces/location.interface';
@@ -80,6 +80,49 @@ export class LocationService {
     }
   
     return this.http.post<ApiResponse<Location>>(`${this.apiUrl}`, formData).pipe(
+      map(response => new LocationModel(response.data))
+    );
+  }
+
+  updateLocation(id: string, data: {
+    name?: string;
+    address?: string;
+    description?: string;
+    coordinates?: string;
+    tags?: string;
+    imageUrl?: string;
+    imageFile?: File | null;
+  }): Observable<LocationModel> {
+    const formData = new FormData();
+  
+    // Añadimos sólo los campos que estén definidos y no vacíos
+    if (data.name && data.name.trim() !== '') {
+      formData.append('name', data.name);
+    }
+    if (data.address && data.address.trim() !== '') {
+      formData.append('address', data.address);
+    }
+    if (data.description && data.description.trim() !== '') {
+      formData.append('description', data.description);
+    }
+    if (data.coordinates && data.coordinates.trim() !== '') {
+      formData.append('coordinates', data.coordinates);
+    }
+    if (data.tags && data.tags.trim() !== '') {
+      formData.append('tags', data.tags);
+    }
+    if (data.imageFile) {
+      formData.append('imageFile', data.imageFile, data.imageFile.name);
+    } else if (data.imageUrl && data.imageUrl.trim() !== '') {
+      formData.append('imageUrl', data.imageUrl);
+    }
+  
+    if ((formData as any).keys().next().done) {
+      // No hay campos en el formData, lanzamos error o devolvemos un observable con error
+      return throwError(() => new Error('No se ha proporcionado ningún dato para actualizar'));
+    }
+  
+    return this.http.put<ApiResponse<Location>>(`${this.apiUrl}/${id}`, formData).pipe(
       map(response => new LocationModel(response.data))
     );
   }
