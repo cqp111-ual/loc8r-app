@@ -1,3 +1,22 @@
+.custom-accordion {
+  background: var(--ion-color-light);
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+
+  // ion-item {
+  //   --border-radius: 12px 12px 0 0;
+  //   font-weight: 500;
+  // }
+
+  [slot="content"] {
+    padding: 12px;
+    background: var(--ion-color-light);
+    border-top: 1px solid #ddd;
+  }
+}
+
 .filters-container {
     display: flex;
     gap: 1rem;
@@ -10,7 +29,8 @@
   
   .results-container {
     min-height: 200px;
-  }
+    background-color: transparent; // color de fondo suave
+    padding: 1rem;      }
   
   .pagination-controls {
     display: flex;
@@ -24,4 +44,5 @@
       line-height: 32px;
     }
   }
+
   

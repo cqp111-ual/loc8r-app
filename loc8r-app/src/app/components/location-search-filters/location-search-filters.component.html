@@ -1,0 +1,77 @@
+
+  <ion-item fill="clear" lines="none" class="ion-no-padding">
+    <ion-input
+      class="ion-margin-vertical"
+      placeholder="¿Qué estas buscando?"
+      label="Búsqueda"
+      label-placement="floating"
+      fill="outline"
+      [(ngModel)]="query"
+      (keydown.enter)="emitSearch()"
+    >
+      <ion-icon slot="start" name="search-outline"></ion-icon>
+    </ion-input>
+    <!-- <ion-searchbar
+      class="ion-padding-vertical" 
+      animated="true" 
+      placeholder="¿Qué estas buscando?"
+      (ionChange)="handleSearchBar($event)"
+      [(ngModel)]="query"
+    ></ion-searchbar> -->
+  </ion-item>
+
+  <ion-item fill="clear" lines="full" class="ion-no-padding">
+    <ion-select
+      label="Buscar por"
+      label-placement="floating"
+      [(ngModel)]="searchBy"
+    >
+      <ion-select-option value="name">Nombre</ion-select-option>
+      <!-- <ion-select-option value="date">Fecha</ion-select-option> -->
+      <ion-select-option value="coordinates">Coordenadas</ion-select-option>
+    </ion-select>
+  </ion-item>
+
+  <ion-item fill="clear" lines="full" class="ion-no-padding">
+    <ion-select
+      label="Ordenar por"
+      label-placement="floating"
+      [(ngModel)]="sortBy"
+    >
+      <ion-select-option value="name">Nombre</ion-select-option>
+      <ion-select-option value="rating">Valoración</ion-select-option>
+      <ion-select-option value="date">Fecha</ion-select-option>
+    </ion-select>
+  </ion-item>
+
+  <ion-item fill="clear" lines="full" class="ion-no-padding">
+    <ion-select
+      label="Orden"
+      label-placement="floating"
+      [(ngModel)]="order"
+    >
+      <ion-select-option value="asc">Ascendente</ion-select-option>
+      <ion-select-option value="desc">Descendente</ion-select-option>
+    </ion-select>
+  </ion-item>
+
+  <ion-item fill="clear" lines="full" class="ion-no-padding">
+    <ion-select
+      label="Ítems por página"
+      label-placement="floating"
+      [(ngModel)]="pageSize"
+    >
+      <ion-select-option [value]="6">6</ion-select-option>
+      <ion-select-option [value]="12">4</ion-select-option>
+      <ion-select-option [value]="24">24</ion-select-option>
+    </ion-select>
+  </ion-item>
+
+  <div class="search-footer ion-padding">
+    <ion-button 
+      (click)="emitSearch()"
+      color="primary"
+    >
+      Buscar
+    </ion-button>
+  </div>

@@ -5,8 +5,8 @@
     [alt]="location.name"
   />
   <ion-card-header>
-    <ion-card-title class="location-name">{{ location.name }}</ion-card-title>
-    <ion-card-subtitle>{{ location.address }}</ion-card-subtitle>
+    <ion-card-title class="location-name ion-padding-vertical">{{ location.name }}</ion-card-title>
+    <ion-card-subtitle class="location-address">{{ location.address }}</ion-card-subtitle>
   </ion-card-header>
 
   <ion-card-content>
@@ -29,7 +29,7 @@
     </div>
 
     <!-- Coordenadas justo debajo -->
-    <div class="location-coordinates">
+    <div class="location-coordinates ion-padding-bottom">
       <ion-icon name="location"></ion-icon>
       <a [href]="geolocationUrl" target="_blank" rel="noopener noreferrer">
         [ {{ location.coordinates[0] }}, {{ location.coordinates[1] }} ]

@@ -1,4 +1,10 @@
 .location-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%; // <-- Asegura que ocupe toda la celda del grid
+  max-height: 100%; // para que no se desborde
+
+  width: 100%;
   max-width: 400px;
   margin: auto;
   border-radius: 16px;
@@ -22,6 +28,13 @@
     font-weight: bold;
     font-size: 1.4rem;
   }
+
+  .location-name,
+  .location-address {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
   .rating-info-row {
     display: flex;
@@ -88,9 +101,10 @@
 
 @media (max-width: 480px) {
   .location-card {
-    max-width: 100%;
+    width: 100%;
+    max-width: 360px;
     border-radius: 12px;
-
+    margin: auto;
     .location-name {
       font-size: 1.2rem;
     }

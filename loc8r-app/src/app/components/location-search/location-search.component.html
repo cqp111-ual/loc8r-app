@@ -1,100 +1,74 @@
 <app-header title="Explorar Ubicaciones"></app-header>
 
 <ion-content class="ion-padding">
+  <div class="content-container">
 
-  <ion-card>
-    <ion-card-content>
-      <ion-searchbar
-        [value]="query"
-        debounce="0"
-        (ionInput)="query = $event.detail.value || ''"
-        (keyup)="onInputKeyup($event)"
-        placeholder="Buscar..."
-        showCancelButton="focus"
-      ></ion-searchbar>
-
-      <div class="filters-container ion-margin-top">
-
-        <!-- Buscar en -->
-        <ion-item lines="none" class="filter-item">
-          <ion-label>Buscar en</ion-label>
-          <ion-select
-            [value]="searchBy"
-            (ionChange)="searchBy = $event.detail.value"
-            interface="popover"
-          >
-            <ion-select-option *ngFor="let option of searchByOptions" [value]="option.value">
-              {{ option.label }}
-            </ion-select-option>
-          </ion-select>
+    <!-- Search component -->
+    <ion-accordion-group class="custom-accordion ion-margin-bottom">
+      <ion-accordion value="filters">
+        <ion-item slot="header" color="light">
+          <ion-label>Filtros de búsqueda</ion-label>
         </ion-item>
+        <div slot="content">
+          <app-location-search-filters
+            (search)="onSearch($event)"
+          ></app-location-search-filters>
+        </div>
+      </ion-accordion>
+    </ion-accordion-group>
 
-        <!-- Ordenar por -->
-        <ion-item lines="none" class="filter-item">
-          <ion-label>Ordenar por</ion-label>
-          <ion-select
-            [value]="sortBy"
-            (ionChange)="sortBy = $event.detail.value"
-            interface="popover"
+    <div class="results-container ion-margin-top" style="min-height: 300px; position: relative;">
+      <!-- Spinner grande centrado -->
+      <ion-spinner
+        *ngIf="isLoading"
+        name="crescent"
+        style="display: block; margin: 4rem auto;"
+        color="primary"
+      ></ion-spinner>
+
+      <!-- Mensaje no resultados -->
+      <ion-card *ngIf="!isLoading && results.length === 0">
+        <ion-card-header>
+          <ion-card-title>No hay resultados</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          Empieza a escribir y pulsa buscar para ver resultados.
+        </ion-card-content>
+      </ion-card>
+
+      <!-- Resultados -->
+      <ion-grid *ngIf="!isLoading && results.length > 0">
+        <ion-row>
+          <ion-col class="ion-padding"
+            size="12"
+            size-md="6"
+            size-lg="4"
+            *ngFor="let loc of results"
           >
-            <ion-select-option *ngFor="let option of sortByOptions" [value]="option.value">
-              {{ option.label }}
-            </ion-select-option>
-          </ion-select>
-        </ion-item>
+            <app-location-card
+              [location]="loc"
+              (click)="goToLocation(loc)"
+            ></app-location-card>
+          </ion-col>
+        </ion-row>
+      </ion-grid>    
 
-        <!-- Orden (asc / desc) -->
-        <ion-item lines="none" class="filter-item">
-          <ion-label>Orden</ion-label>
-          <ion-select
-            [value]="order"
-            (ionChange)="order = $event.detail.value"
-            interface="popover"
-          >
-            <ion-select-option *ngFor="let option of orderOptions" [value]="option.value">
-              {{ option.label }}
-            </ion-select-option>
-          </ion-select>
-        </ion-item>
-
+      <!-- Paginación -->
+      <div
+        class="pagination-controls ion-text-center ion-margin-top"
+        *ngIf="!isLoading && results.length > 0"
+      >
+        <ion-button (click)="prevPage()" [disabled]="offset === 0" fill="outline" size="small">
+          Anterior
+        </ion-button>
+        <span class="page-info">
+          Página {{ currentPage }} de {{ math.ceil((totalResults || 0) / (pageSize || 1)) }}
+        </span>
+        <ion-button (click)="nextPage()" [disabled]="(offset + pageSize) >= totalResults" fill="outline" size="small">
+          Siguiente
+        </ion-button>
       </div>
 
-      <ion-button expand="block" class="ion-margin-top" (click)="executeSearch()">
-        Buscar
-      </ion-button>
-    </ion-card-content>
-  </ion-card>
-
-  <div class="results-container ion-margin-top">
-    <ion-card *ngIf="results.length === 0">
-      <ion-card-header>
-        <ion-card-title>No hay resultados</ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        Empieza a escribir y pulsa buscar para ver resultados.
-      </ion-card-content>
-    </ion-card>
-
-    <ion-list *ngIf="results.length > 0">
-      <div
-        *ngFor="let loc of results"
-        (click)="goToLocation(loc)"
-        style="margin-bottom: 1rem; text-decoration: none;"
-      >
-        <app-location-card [location]="loc"></app-location-card>
-    </div>
-    </ion-list>
-
-    <!-- Paginación -->
-    <div class="pagination-controls ion-text-center ion-margin-top">
-      <ion-button (click)="prevPage()" [disabled]="offset === 0" fill="outline" size="small">
-        Anterior
-      </ion-button>
-      <span class="page-info">Página {{ currentPage }} de {{ math.ceil((totalResults || 0) / (pageSize || 1)) }}</span>
-      <ion-button (click)="nextPage()" [disabled]="(offset + pageSize) >= totalResults" fill="outline" size="small">
-        Siguiente
-      </ion-button>
     </div>
   </div>
-
 </ion-content>

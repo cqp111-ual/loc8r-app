@@ -1,0 +1,22 @@
+  ion-input {
+    --highlight-color-valid: var(--ion-color-primary);
+    --highlight-color: var(--ion-color-primary);
+  }
+
+  ion-select {
+    --highlight-color-valid: var(--ion-color-primary);
+    --highlight-color: var(--ion-color-primary);
+  }
+
+  .search-footer {
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  ion-searchbar {
+    --border-radius: 12px;
+  }
+
+  ion-item {
+    --background: transparent;
+  }
